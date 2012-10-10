@@ -1,7 +1,12 @@
 # Django settings for signup project.
+import os, sys
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+
+#change this on local installations
+cwd = os.getcwd()
+APPLICATION_ROOT = os.path.realpath(os.path.join(cwd, '..'))
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -109,7 +114,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    '/Users/eric/djcode/signup/templates',
+    APPLICATION_ROOT + '/signup/templates',
 )
 
 INSTALLED_APPS = (
