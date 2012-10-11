@@ -6,6 +6,7 @@ class UserInfoForm(forms.Form):
     first_name = forms.CharField(max_length=100)
     last_name = forms.CharField(max_length=100)
     email = forms.EmailField()
+    email_confirm = forms.EmailField()
     phone = USPhoneNumberField()
 
 class PIInfoForm(forms.Form):
