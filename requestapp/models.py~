@@ -32,6 +32,6 @@ class Request(models.Model):
     def is_old(self):
         return self.last_update <= timezone.now() - datetime.timedelta(days=3)
 
-class RCUserForm(ModelForm):
+"""class RCUserForm(ModelForm):
     class Meta:
-        model = RCUser
+        model = RCUser"""

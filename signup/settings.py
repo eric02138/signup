@@ -130,6 +130,8 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     'requestapp',
     'django.contrib.formtools',
+    'south',
+    'tastypie',
 )
 
 # A sample logging configuration. The only tangible logging

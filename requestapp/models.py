@@ -13,15 +13,8 @@ class RCUser(models.Model):
     def __unicode__(self):
         return self.rcuser.username
 
-class Service(models.Model):
-    name = models.CharField(max_length=50)
-
-    def __unicode__(self):
-        return self.name
-
 class Request(models.Model):
-    rcuser = models.ForeignKey(RCUser)
-    services = models.ManyToManyField(Service)
+    rcuser = models.ForeignKey(User)
     created = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(auto_now=True)
 
@@ -31,7 +24,3 @@ class Request(models.Model):
 
     def is_old(self):
         return self.last_update <= timezone.now() - datetime.timedelta(days=3)
-
-"""class RCUserForm(ModelForm):
-    class Meta:
-        model = RCUser"""
