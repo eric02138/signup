@@ -130,7 +130,10 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     'requestapp',
     'django.contrib.formtools',
+    #needs to be installed manually
+    #South
     'south',
+    #Tastypie
     'tastypie',
 )
 

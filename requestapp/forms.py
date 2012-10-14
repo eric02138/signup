@@ -1,18 +1,17 @@
 from django import forms
 from django.forms import ModelForm
+from requestapp.models import Request
 from django.contrib.localflavor.us.forms import USPhoneNumberField
 
-class UserInfoForm(forms.Form):
-    first_name = forms.CharField(max_length=100)
-    last_name = forms.CharField(max_length=100)
-    email = forms.EmailField()
-    email_confirm = forms.EmailField()
-    phone = USPhoneNumberField()
+class UserInfoForm(ModelForm):
+    class Meta:
+        model = Request
+        fields = ('first_name', 'last_name', 'email', 'email_confirm', 'phone')
 
-class PIInfoForm(forms.Form):
-    first_name = forms.CharField(max_length=100)
-    last_name = forms.CharField(max_length=100)
-    email = forms.EmailField()
+class PIInfoForm(ModelForm):
+    class Meta:
+        model = Request
+        fields = ('pi_first_name', 'pi_last_name', 'pi_email')
 
 class ServiceChoiceForm(forms.Form):
     needs_spinal = forms.BooleanField(required=False)
