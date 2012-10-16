@@ -8,7 +8,7 @@ admin.autodiscover()
 
 multi_forms = [('userinfo', UserInfoForm), 
                ('piinfo', PIInfoForm), 
-               ('sericechoices', ServiceChoiceForm), 
+               ('servicechoices', ServiceChoiceForm), 
                ('spinalresources', SpinalResourceListForm),
                ('storage', StorageChoiceForm),
                ('otherinfo', OtherForm)]
@@ -19,7 +19,7 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^request/$', RequestWizard.as_view(multi_forms, condition_dict={'3': is_spinal_checked,
-                                                                          '4': is_storage_checked,
-                                                                          '5': is_other_checked})),
+    url(r'^request/$', RequestWizard.as_view(multi_forms, condition_dict={'spinalresources': is_spinal_checked,
+                                                                          'storage': is_storage_checked,
+                                                                          'otherinfo': is_other_checked})),
 )

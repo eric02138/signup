@@ -8,6 +8,20 @@ class UserInfoForm(ModelForm):
         model = Request
         fields = ('first_name', 'last_name', 'email', 'email_confirm', 'phone')
 
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        email = cleaned_data.get('email')
+        email_confirm = cleaned_data.get('email_confirm')
+
+        if email != email_confirm:
+            msg = u'Confirmation Email does not match Email.  Please try again.'
+            self._errors["email"] = self.error_class("")
+            self._errors["email_confirm"] = self.error_class([msg])
+
+            del cleaned_data["email"]
+            del cleaned_data["email_confirm"]
+        return cleaned_data
+
 class PIInfoForm(ModelForm):
     class Meta:
         model = Request

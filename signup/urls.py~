@@ -6,17 +6,16 @@ from requestapp.views import RequestWizard, is_spinal_checked, is_storage_checke
 from django.contrib import admin
 admin.autodiscover()
 
-multi_forms = [UserInfoForm, 
-               PIInfoForm, 
-               ServiceChoiceForm, 
-               SpinalResourceListForm,
-               StorageChoiceForm,
-               OtherForm]
+multi_forms = [('userinfo', UserInfoForm), 
+               ('piinfo', PIInfoForm), 
+               ('sericechoices', ServiceChoiceForm), 
+               ('spinalresources', SpinalResourceListForm),
+               ('storage', StorageChoiceForm),
+               ('otherinfo', OtherForm)]
 
 urlpatterns = patterns('',
      url(r'^$', 'requestapp.views.home', name='home'),
      url(r'^requests/$', 'requestapp.views.index'),
-     url(r'^requests/create/$', 'requestapp.views.create'),
 
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
