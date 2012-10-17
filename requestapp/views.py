@@ -27,7 +27,10 @@ class RequestWizard(SessionWizardView):
     def done(self, form_list, **kwargs):
         request = Request()
         for form in form_list:
-            print dir(form.cleaned_data)
+            for k,v in form.cleaned_data.iteritems():
+                request.set_attr(k, v)
+        request.save()
+            
         return render_to_response('formtools/wizard/done.html', {
                 'form_data': [form.cleaned_data for form in form_list],
                 })

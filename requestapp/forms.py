@@ -17,9 +17,11 @@ class UserInfoForm(ModelForm):
             msg = u'Confirmation Email does not match Email.  Please try again.'
             self._errors["email"] = self.error_class("")
             self._errors["email_confirm"] = self.error_class([msg])
+            raise forms.ValidationError(msg)
 
             del cleaned_data["email"]
             del cleaned_data["email_confirm"]
+            
         return cleaned_data
 
 class PIInfoForm(ModelForm):
