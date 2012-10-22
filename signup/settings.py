@@ -135,7 +135,13 @@ INSTALLED_APPS = (
     'south',
     #Tastypie
     'tastypie',
+    #django-recaptcha
+    'captcha',
 )
+
+RECAPTCHA_PUBLIC_KEY = '6LcF-dcSAAAAAC9YRwqCK_x3CX3252w5l5YtR6Sf'
+RECAPTCHA_PRIVATE_KEY = '6LcF-dcSAAAAAM_ebDvfKQ4CLwUJkSoIqFVvrsu7'
+RECAPTCHA_USE_SSL = True
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to

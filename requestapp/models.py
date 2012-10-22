@@ -15,6 +15,13 @@ class RCUser(models.Model):
         return self.rcuser.username
 
 class Request(models.Model):
+    #RC Internal information
+    rt_ticket_number = models.IntegerField(default=0)
+    rc_approval = models.BooleanField(default=False)
+    pi_approval = models.BooleanField(default=False)
+    req_created = models.DateTimeField(default="", auto_now_add=True)
+    req_last_modified = models.DateTimeField(default="", auto_now=True)
+
     first_name = models.CharField(default="", null=False, max_length=100)
     last_name = models.CharField(default="", null=False, max_length=100)
     email = models.EmailField(default="", null=False)
@@ -39,9 +46,12 @@ class Request(models.Model):
     def save(self, *args, **kwargs):
         super(Request, self).save(*args, **kwargs)
 
-def do_something(sender, **kwargs):
+def post_save_handler(sender, **kwargs):
     # the object which is saved can be accessed via kwargs 'instance' key.
     obj = kwargs['instance']
-    print 'the object is now saved.'
+    if obj.rc_approval:
+        print "send email to PI"
+    if obj.pi_approval:
+        print "send email to lab admin, resource admin"
 
-post_save.connect(do_something, sender=Request)
+post_save.connect(post_save_handler, sender=Request)

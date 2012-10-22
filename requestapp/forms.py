@@ -1,7 +1,11 @@
 from django import forms
 from django.forms import ModelForm
+from captcha.fields import ReCaptchaField
 from requestapp.models import Request
 from django.contrib.localflavor.us.forms import USPhoneNumberField
+
+class CaptchaForm(forms.Form):
+    captcha = ReCaptchaField()
 
 class UserInfoForm(ModelForm):
     class Meta:
