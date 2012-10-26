@@ -18,15 +18,19 @@ class Request(models.Model):
     #RC Internal information
     rt_ticket_number = models.IntegerField(default=0)
     rc_approval = models.BooleanField(default=False)
+    rc_rejection = models.BooleanField(default=False)
     pi_approval = models.BooleanField(default=False)
+    pi_rejection = models.BooleanField(default=False)
     req_created = models.DateTimeField(default="", auto_now_add=True)
     req_last_modified = models.DateTimeField(default="", auto_now=True)
 
+    #UserInfo
     first_name = models.CharField(default="", null=False, max_length=100)
     last_name = models.CharField(default="", null=False, max_length=100)
     email = models.EmailField(default="", null=False)
     email_confirm = models.EmailField(default="", null=False)
     phone = PhoneNumberField(default="", null=False)
+    #don't store the password in the database - send it directly to AD
 
     pi_first_name = models.CharField(default="", null=False, max_length=100)
     pi_last_name = models.CharField(default="", null=False, max_length=100)
