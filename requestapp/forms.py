@@ -5,6 +5,7 @@ from captcha.fields import ReCaptchaField
 from requestapp.models import Request
 from django.contrib.localflavor.us.forms import USPhoneNumberField
 from ldapconnection import LdapConnection
+import json, urllib
 
 class CaptchaForm(forms.Form):
     captcha = ReCaptchaField()
@@ -93,18 +94,21 @@ class PIInfoForm(ModelForm):
             
             del cleaned_data["email"]
 
+        """ Removed, but might be useful in the future
         #check if PI is not in AD
         ad_result = []
         ldap = LdapConnection()
         #search by email
-        ad_result.append(ldap.search_by_email(email))
+        email_search = ldap.search_by_email(email)
         #search by first and last name
-        ad_result.append(ldap.search_by_firstname_lastname(first_name, last_name))
+        name_search = ldap.search_by_firstname_lastname(first_name, last_name)
         ldap.unbind()
-        if not ad_result:
+
+        if not (email_search or name_search):
             msg = '{0} {1} is not a valid Harvard Principal Investigator.'.format(first_name, last_name)
             msg = mark_safe(msg)
             raise forms.ValidationError(msg)
+        """
         return cleaned_data
 
 class ServiceChoiceForm(forms.Form):
@@ -113,9 +117,19 @@ class ServiceChoiceForm(forms.Form):
     needs_other = forms.BooleanField(required=False)
 
 class SpinalResourceListForm(forms.Form):
-    instrument1 = forms.BooleanField(required=False)
-    instrument2 = forms.BooleanField(required=False)
-    instrument3 = forms.BooleanField(required=False)
+    #get the list of instruments and lab admins from 
+    #https://webapps.sciences.fas.harvard.edu/spinal/api/v1/resources/?format=json
+    #https://webapps.sciences.fas.harvard.edu/spinal/api/v1/labadmins/?format=json
+    def __init__(self, *args, **kwargs):
+        super(SpinalResourceListForm, self).__init__(*args, **kwargs)
+        url = 'https://webapps.sciences.fas.harvard.edu/spinal/api/v1/resources/?format=json'
+        f = urllib.urlopen(url)
+        contents = f.read()
+        json_string = json.loads(contents)
+        instrument_list = json_string['objects']
+
+        for i, instrument in enumerate(instrument_list):
+            self.fields['instrument_%s' % i] = forms.BooleanField(required=False, label=instrument['resource'])
 
 class StorageChoiceForm(forms.Form):
     storage_amount = forms.IntegerField(min_value=1, max_value=10)
@@ -123,9 +137,3 @@ class StorageChoiceForm(forms.Form):
 class OtherForm(forms.Form):
     message = forms.CharField(widget=forms.Textarea)
 
-class ContactForm1(forms.Form):
-    subject = forms.CharField(max_length=100)
-    sender = forms.EmailField()
-
-class ContactForm2(forms.Form):
-    message = forms.CharField(widget=forms.Textarea)
