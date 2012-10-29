@@ -33,7 +33,17 @@ def captcha(request):
             return HttpResponseRedirect('/request-wizard/')
     return render_to_response('captcha.html', { 'form': form }, context_instance=RequestContext(request))
 
+TEMPLATES = {"userinfo": "userinfo.html",
+             "piinfo": "piinfo.html",
+             "servicechoices": "servicechoices.html",
+             "spinalresources": "spinalresources.html",
+             "storage": "storage.html",
+             "otherinfo": "otherinfo.html"}
+
 class RequestWizard(SessionWizardView):
+
+    def get_template_names(self):
+        return [TEMPLATES[self.steps.current]]
 
     def render(self, form=None, **kwargs):
         form = form or self.get_form()

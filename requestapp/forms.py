@@ -128,9 +128,15 @@ class SpinalResourceListForm(forms.Form):
         json_string = json.loads(contents)
         instrument_list = json_string['objects']
 
+        last_facility_name = ''
         for i, instrument in enumerate(instrument_list):
+            print instrument['resource'], instrument['facility_name']
+            if last_facility_name != instrument['facility_name']:
+                print "  NEW FACILITY"
+                self.fields['facility_name_%s' % i] = forms.CharField(widget=forms.HiddenInput(), initial=instrument['facility_name'])
             self.fields['instrument_%s' % i] = forms.BooleanField(required=False, label=instrument['resource'])
-
+            last_facility_name = instrument['facility_name']
+            
 class StorageChoiceForm(forms.Form):
     storage_amount = forms.IntegerField(min_value=1, max_value=10)
 
