@@ -1,9 +1,10 @@
-import ldap, sys
+import ldap, sys, codecs
 from ldap import modlist
 ldap.set_option(ldap.OPT_REFERRALS, 0)
 ldap.set_option(ldap.OPT_PROTOCOL_VERSION, ldap.VERSION3)
 #allow a self-signed cert, for now
 ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+#ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS)
 
 LDAP_SERVER = 'ldaps://10.242.28.54:636'
 AD_BIND_DN = 'accounttest@rcdev.domain'
@@ -60,7 +61,6 @@ class LdapConnection:
             ('pwdLastSet', ['-1']),
             ]
 
-
         try:
             self.conn.add_s(dn, record_attrs)
         except ldap.LDAPError, error_message:
@@ -76,6 +76,32 @@ class LdapConnection:
         """
 
         return self
+
+    def set_password(self, cn):
+        dn = 'cn=%s,%s' % (cn, NEW_ACCOUNT_OU)
+        old_pw = 'Password4321'.encode('utf-16le')
+        new_pw = 'Password1234!'.encode('utf-16le')
+        #mod_acct = [(ldap.MOD_DELETE, 'unicodePwd', old_pw)]
+        try:
+            self.conn.passwd_s(dn, old_pw, new_pw)
+        except ldap.LDAPError, error_message:
+            print "Error setting password: %s" % error_message
+            return False
+        return True
+
+    """
+    Doesn't Work
+    def set_password(self, cn):
+        dn = 'cn=%s,%s' % (cn, NEW_ACCOUNT_OU)
+        old_pw = ''.encode('utf-16le')
+        new_pw = 'Password1234!'.encode('utf-16le')
+        try:
+            self.conn.passwd_s(dn, old_pw, new_pw)
+        except ldap.LDAPError, error_message:
+            print "Error setting password: %s" % error_message
+            return False
+        return True
+    """
 
     def enable_new_user(self, cn):
         #doesn't work with current AD configuration
@@ -112,5 +138,6 @@ def test_add():
 if __name__=='__main__':
     ldap_conn = LdapConnection()
     #ldap_conn.enable_new_user('John Brunelle')
-    ldap_conn.add_user()
+    #ldap_conn.add_user()
+    ldap_conn.set_password('John Brunelle')
     ldap_conn.unbind()

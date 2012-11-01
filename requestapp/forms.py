@@ -11,8 +11,8 @@ class CaptchaForm(forms.Form):
     captcha = ReCaptchaField()
 
 class UserInfoForm(ModelForm):
-    choose_password = forms.CharField(widget=forms.PasswordInput)
-    confirm_password = forms.CharField(widget=forms.PasswordInput)
+    choose_password = forms.CharField(widget=forms.PasswordInput, required=True)
+    confirm_password = forms.CharField(widget=forms.PasswordInput, required=True)
     class Meta:
         model = Request
         fields = ('first_name', 'last_name', 'email', 'email_confirm', 'phone')
@@ -52,8 +52,8 @@ class UserInfoForm(ModelForm):
             self._errors["choose_password"] = self.error_class([msg])
             #raise forms.ValidationError(msg)
             
-            del cleaned_data["choose_password"]
-            del cleaned_data["confirm_password"]            
+            del password
+            del confirm_password
 
         #check if password meets AD's requirements
         ldap = LdapConnection()
@@ -122,6 +122,8 @@ class SpinalResourceListForm(forms.Form):
     #https://webapps.sciences.fas.harvard.edu/spinal/api/v1/labadmins/?format=json
     def __init__(self, *args, **kwargs):
         super(SpinalResourceListForm, self).__init__(*args, **kwargs)
+
+        #Get instruments via JSON
         url = 'https://webapps.sciences.fas.harvard.edu/spinal/api/v1/resources/?format=json'
         f = urllib.urlopen(url)
         contents = f.read()
@@ -132,11 +134,39 @@ class SpinalResourceListForm(forms.Form):
         for i, instrument in enumerate(instrument_list):
             print instrument['resource'], instrument['facility_name']
             if last_facility_name != instrument['facility_name']:
-                print "  NEW FACILITY"
-                self.fields['facility_name_%s' % i] = forms.CharField(widget=forms.HiddenInput(), initial=instrument['facility_name'])
-            self.fields['instrument_%s' % i] = forms.BooleanField(required=False, label=instrument['resource'])
+                self.fields['facility_name_%s' % i] = forms.CharField(widget=forms.HiddenInput(), initial=instrument['facility_name'], required=False)
+            self.fields['instrument_%s' % i] = forms.BooleanField(widget=forms.CheckboxInput(attrs={'free_instrument': instrument['free_instrument']}), 
+                                                                  required=False, 
+                                                                  label=instrument['resource'])
+
+            resource_admin_string = "%s | %s | " % (instrument['resource'], instrument['g_group'])
+            for j,resource_admin in enumerate(instrument['resource_admins']):
+                resource_admin_string += "%s, %s" % (resource_admin['resource_admin_fullname'], resource_admin['resource_admin_email'])
+                print "j: ", j
+                print "inst len: ", len(instrument['resource_admins'])
+                if j < (len(instrument['resource_admins']) - 1):
+                    resource_admin_string += "; "
+
+            self.fields['resource_admins_%s' % i] = forms.CharField(widget=forms.HiddenInput(), initial=resource_admin_string, required=False)
             last_facility_name = instrument['facility_name']
             
+        #Get Labs (and admins) via JSON
+        url = 'https://webapps.sciences.fas.harvard.edu/spinal/api/v1/lab_groups/?format=json'
+        f = urllib.urlopen(url)
+        contents = f.read()
+        json_string = json.loads(contents)
+        lab_list = json_string['objects']
+
+        lab_admin_tuple = []
+        lab_admin_tuple.append(('','-------------'))
+        for lab in lab_list:
+            for lab_admin in lab['lab_admins']:
+                choice_display = "%s - %s" % (lab['name'], lab_admin['lab_admin_fullname'])
+                choice_value = "%s - %s" % (lab_admin['lab_admin_email'], lab_admin['lab_admin_fullname'])
+                lab_admin_tuple.append((choice_value, choice_display))
+        self.fields['lab_administrators'] = forms.ChoiceField(choices=lab_admin_tuple, required=False)
+
+
 class StorageChoiceForm(forms.Form):
     storage_amount = forms.IntegerField(min_value=1, max_value=10)
 
