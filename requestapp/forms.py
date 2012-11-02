@@ -166,6 +166,7 @@ class SpinalResourceListForm(forms.Form):
                 lab_admin_tuple.append((choice_value, choice_display))
         self.fields['lab_administrators'] = forms.ChoiceField(choices=lab_admin_tuple, required=False)
 
+        self.fields['extra_info'] = forms.CharField(widget=forms.Textarea, required=False)
 
 class StorageChoiceForm(forms.Form):
     storage_amount = forms.IntegerField(min_value=1, max_value=10)
