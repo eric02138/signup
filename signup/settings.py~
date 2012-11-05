@@ -1,5 +1,6 @@
 # Django settings for signup project.
-import os, sys
+import os, sys, ldap
+from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -94,6 +95,14 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.app_directories.Loader',
 #     'django.template.loaders.eggs.Loader',
 )
+
+AUTH_LDAP_SERVER_URI = "ldaps://10.242.28.54:636"
+AUTH_LDAP_START_TLS = True
+
+AUTH_LDAP_BIND_DN = "cn=accounttest,dc=rcdev,dc=domain"
+AUTH_LDAP_BIND_PASSWORD = "!3ZW&5!X"
+AUTH_LDAP_USER_SEARCH = LDAPSearch("ou=Domain Users,dc=rcdev,dc=domain",
+    ldap.SCOPE_SUBTREE, "(uid=%(user)s)")
 
 AUTHENTICATION_BACKENDS = (
     'django_auth_ldap.backend.LDAPBackend',

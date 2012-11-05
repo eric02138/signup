@@ -157,6 +157,11 @@ RECAPTCHA_PUBLIC_KEY = '6LcF-dcSAAAAAC9YRwqCK_x3CX3252w5l5YtR6Sf'
 RECAPTCHA_PRIVATE_KEY = '6LcF-dcSAAAAAM_ebDvfKQ4CLwUJkSoIqFVvrsu7'
 RECAPTCHA_USE_SSL = True
 
+#RT Connection
+RT_URI = 'http://rthelp.rc.fas.harvard.edu//REST/1.0/'
+RT_USER = 'emattison'
+RT_PW = 'M@dd0g76'
+
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
 # the site admins on every HTTP 500 error when DEBUG=False.

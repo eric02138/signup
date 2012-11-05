@@ -5,6 +5,8 @@ from django.core.urlresolvers import reverse
 from django.contrib.formtools.wizard.views import SessionWizardView
 from models import *
 from forms import CaptchaForm
+from signup.settings import RT_URI, RT_USER, RT_PW
+import rt
 
 def home(request):
     return HttpResponse("You're home")
@@ -56,6 +58,8 @@ class RequestWizard(SessionWizardView):
 
     def done(self, form_list, **kwargs):
             
+        #Format the data for output and filter out unnecessary instrument fields
+        #This is a bit of a pain: form wizard expects a list of dicts - you can't name them.  Which sucks further down in the code...
         data_list = []
         for form in form_list:
             form_dict = {}
@@ -73,13 +77,15 @@ class RequestWizard(SessionWizardView):
                 for k,v in form.cleaned_data.iteritems():
                     form_dict[k] = v
             data_list.append(form_dict)
-
+        
+        #Save the Request
         request = Request()
         for form in data_list:
             for k,v in form.iteritems():
                 request.set_attr(k, v)
         request.save()
 
+        #Save the LabAdmins and InstrumentRequests
         for form in data_list:
             if form['prefix'] == 'spinalresources':
                 lab_administrator = LabAdministrator() #request only one admin for all resources
@@ -102,6 +108,41 @@ class RequestWizard(SessionWizardView):
                             lab_administrator.extra_info = v
                         lab_administrator.request = request
                         lab_administrator.save()
+
+        #create RT Ticket
+        subject_text = "Account Request for %s %s" % (data_list[0]['first_name'], data_list[0]['last_name'])
+        ticket_text = ""
+        ticket_text += "User Info:\n"
+        ticket_text += " - First Name: %s\n" % (data_list[0]['first_name'])
+        ticket_text += " - Last Name: %s\n" % (data_list[0]['last_name'])
+        ticket_text += " - Email: %s\n" % (data_list[0]['email'])
+        ticket_text += " - Phone: %s\n" % (data_list[0]['phone'])
+        ticket_text += " Faculty Sponsor:\n"
+        ticket_text += " - PI First Name: %s\n" % (data_list[1]['pi_first_name'])
+        ticket_text += " - PI Last Name: %s\n" % (data_list[1]['pi_last_name'])
+        ticket_text += " - PI Email: %s\n" % (data_list[1]['pi_email'])
+
+        if data_list[2]['needs_spinal']:
+            ticket_text += " User needs instrument access.  See below.\n"
+
+        if data_list[2]['needs_storage']:
+            ticket_text += " User needs network storage.  See below.\n"
+
+        if data_list[2]['needs_other']:
+            ticket_text += " User has other needs.  See below.\n"
+
+        for k,v in data_list[3].iteritems():
+            if v:
+                ticket_text += " - %s: %s\n" % (k, v)
+
+        tracker = rt.Rt(RT_URI, RT_USER, RT_PW)
+        tracker.login()
+        ticket_num = tracker.create_ticket(Queue='AccountRequest', Subject=subject_text, Text=ticket_text)
+        tracker.logout()
+
+        if ticket_num:
+            request.rt_ticket_number = ticket_num
+            request.save()
 
         return render_to_response('formtools/wizard/done.html', {'data_list': data_list},)
 
