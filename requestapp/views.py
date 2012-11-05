@@ -55,13 +55,53 @@ class RequestWizard(SessionWizardView):
         return self.render_to_response(context)
 
     def done(self, form_list, **kwargs):
-        request = Request()
+            
+        data_list = []
         for form in form_list:
-            for k,v in form.cleaned_data.iteritems():
+            form_dict = {}
+            form_dict['prefix'] = form.prefix
+            if form.prefix == 'spinalresources':
+                #only add information for selected instruments
+                for k,v in form.cleaned_data.iteritems():
+                    if ('instruments' in k) and v:
+                        #form_dict[k] = v  This doesn't really tell us much
+                        instrument_num = k.strip('instruments[')[:-1]
+                        form_dict['resource_admins[%s]' % instrument_num] = form.cleaned_data.get('resource_admins[%s]' % instrument_num)
+                    if ('lab_administrators' in k) or ('extra_info' in k):
+                        form_dict[k] = v
+            else:
+                for k,v in form.cleaned_data.iteritems():
+                    form_dict[k] = v
+            data_list.append(form_dict)
+
+        request = Request()
+        for form in data_list:
+            for k,v in form.iteritems():
                 request.set_attr(k, v)
         request.save()
-            
-        return render_to_response('formtools/wizard/done.html', {
-                'form_data': [form.cleaned_data for form in form_list],
-                })
+
+        for form in data_list:
+            if form['prefix'] == 'spinalresources':
+                lab_administrator = LabAdministrator() #request only one admin for all resources
+                for k,v in form.iteritems():
+                    if 'resource_admins' in k:
+                        instrument_request = InstrumentRequest()
+                        resource_name, resource_group, resource_administrators = v.split(" | ")
+                        instrument_request.resource_name = resource_name
+                        instrument_request.resource_group = resource_group
+                        instrument_request.resource_administrators = resource_administrators
+                        instrument_request.request = request
+                        instrument_request.save()
+
+                    if (k == 'lab_administrators') or (k == 'extra_info'):
+                        if (k == 'lab_administrators') and (v != ""):
+                            lab_admin_email, lab_admin_name = v.split(" - ")
+                            lab_administrator.lab_administrator_name = lab_admin_name
+                            lab_administrator.lab_administrator_email = lab_admin_email
+                        if (k == 'extra_info' and v != ""):
+                            lab_administrator.extra_info = v
+                        lab_administrator.request = request
+                        lab_administrator.save()
+
+        return render_to_response('formtools/wizard/done.html', {'data_list': data_list},)
 

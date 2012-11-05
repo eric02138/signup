@@ -50,6 +50,20 @@ class Request(models.Model):
     def save(self, *args, **kwargs):
         super(Request, self).save(*args, **kwargs)
 
+class InstrumentRequest(models.Model):
+    request = models.ForeignKey(Request)
+
+    resource_name = models.CharField(default="", null=False, max_length=200)
+    resource_group = models.CharField(default="", null=False, max_length=50)
+    resource_administrators = models.CharField(default="", null=False, max_length=500)
+
+class LabAdministrator(models.Model):
+    request = models.ForeignKey(Request)
+
+    lab_administrator_name = models.CharField(default="", null=False, max_length=50)
+    lab_administrator_email = models.EmailField(default="", null=False)
+    extra_info = models.CharField(default="", null=True, max_length=500)
+
 def post_save_handler(sender, **kwargs):
     # the object which is saved can be accessed via kwargs 'instance' key.
     obj = kwargs['instance']

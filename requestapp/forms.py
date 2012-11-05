@@ -37,7 +37,7 @@ class UserInfoForm(ModelForm):
             del cleaned_data["email_confirm"]
 
         #require a harvard email address
-        if not email.lower().endswith('harvard.edu'):
+        if email and not email.lower().endswith('harvard.edu'):
             msg = u'Email must end with "harvard.edu".'
             self._errors["email"] = self.error_class([msg])
             self._errors["email_confirm"] = self.error_class("")
@@ -132,22 +132,19 @@ class SpinalResourceListForm(forms.Form):
 
         last_facility_name = ''
         for i, instrument in enumerate(instrument_list):
-            print instrument['resource'], instrument['facility_name']
             if last_facility_name != instrument['facility_name']:
-                self.fields['facility_name_%s' % i] = forms.CharField(widget=forms.HiddenInput(), initial=instrument['facility_name'], required=False)
-            self.fields['instrument_%s' % i] = forms.BooleanField(widget=forms.CheckboxInput(attrs={'free_instrument': instrument['free_instrument']}), 
+                self.fields['facility_names[%s]' % i] = forms.CharField(widget=forms.HiddenInput(), initial=instrument['facility_name'], required=False)
+            self.fields['instruments[%s]' % i] = forms.BooleanField(widget=forms.CheckboxInput(attrs={'free_instrument': instrument['free_instrument']}), 
                                                                   required=False, 
                                                                   label=instrument['resource'])
 
             resource_admin_string = "%s | %s | " % (instrument['resource'], instrument['g_group'])
             for j,resource_admin in enumerate(instrument['resource_admins']):
                 resource_admin_string += "%s, %s" % (resource_admin['resource_admin_fullname'], resource_admin['resource_admin_email'])
-                print "j: ", j
-                print "inst len: ", len(instrument['resource_admins'])
                 if j < (len(instrument['resource_admins']) - 1):
                     resource_admin_string += "; "
 
-            self.fields['resource_admins_%s' % i] = forms.CharField(widget=forms.HiddenInput(), initial=resource_admin_string, required=False)
+            self.fields['resource_admins[%s]' % i] = forms.CharField(widget=forms.HiddenInput(), initial=resource_admin_string, required=False)
             last_facility_name = instrument['facility_name']
             
         #Get Labs (and admins) via JSON
@@ -165,8 +162,16 @@ class SpinalResourceListForm(forms.Form):
                 choice_value = "%s - %s" % (lab_admin['lab_admin_email'], lab_admin['lab_admin_fullname'])
                 lab_admin_tuple.append((choice_value, choice_display))
         self.fields['lab_administrators'] = forms.ChoiceField(choices=lab_admin_tuple, required=False)
-
         self.fields['extra_info'] = forms.CharField(widget=forms.Textarea, required=False)
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        for k,v in cleaned_data.iteritems():
+            if ('instruments' in k) and v:
+                instrument_num = k.strip('instruments[')[:-1]
+                #print instrument_num
+                resource_admins = cleaned_data.get('resource_admins[%s]' % instrument_num)
+        return cleaned_data
 
 class StorageChoiceForm(forms.Form):
     storage_amount = forms.IntegerField(min_value=1, max_value=10)

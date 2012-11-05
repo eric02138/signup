@@ -1,3 +1,57 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block content %} You're Done! {% endblock %}
+{% block head %}
+{% endblock %}
+
+{% block content %}
+<div class="dbx-box suf-widget widget_text"><h3 class="dbx-handle scheme dbx-box suf-widget widget_text">Account Sign-up &gt; Finished</h3></div>
+<h3>Congratulations.</h3>
+<p>You're done.  An email has been sent to Researcy Computing and your Faculty Sponsor to confirm that the information you have submitted is appropriate.  Your account should be set up in a day or two.  To check up on the status of your account request, you can send an email to <a href="mailto:rchelp@fas.harvard.edu?subject=Account%20Request">rchelp@fas.harvard.edu</a>.
+
+{% for form in data_list %}
+  {% if form.prefix == "userinfo" %}
+  <div>User Info:</div>
+  <ul>
+    {% for k,v in form.items %}
+      <li>{{k}}: {{v}}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if form.prefix == "piinfo" %}
+  <div>Faculty Sponsor:</div>
+  <ul>
+    {% for k,v in form.items %}
+      <li>{{k}}: {{v}}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if form.prefix == "servicechoices" %}
+  <div>Service Choices:</div>
+  <ul>
+    {% for k,v in form.items %}
+      <li>{{k}}: {{v}}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if form.prefix == "spinalresources" %}
+  <div>Instrument Selection:</div>
+  <ul>
+    {% for k,v in form.items %}
+      {% if 'instruments' in k and v %} 
+      <li>{{k}}: {{v}}</li>
+      {% endif %}
+      {% if 'resource_admins' in k and v %} 
+      <li>{{k}}: {{v}}</li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+{% endfor %}
+
+{{ data_list }}
+{% endblock %}
