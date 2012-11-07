@@ -24,4 +24,5 @@ urlpatterns = patterns('',
                                                                           'storage': is_storage_checked,
                                                                           'otherinfo': is_other_checked})),
     url(r'^request/$', captcha, name='captcha'),
+    url(r'^request/pi-approval/(?P<id_md5>(\w){32})/(?P<approval_option_md5>(\w){32})/$', 'requestapp.views.pi_approval', name='pi_approval'),
 )

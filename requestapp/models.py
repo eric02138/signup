@@ -4,9 +4,10 @@ from django.contrib.auth.models import User
 from django.forms import ModelForm
 from django.contrib.localflavor.us.models import PhoneNumberField
 from django.template.defaultfilters import slugify
-import datetime
+import datetime, md5
 from django.utils import timezone
 from django.core.mail import send_mail
+from signup.settings import PI_APPROVAL
 
 class RCUser(models.Model):
     rcuser = models.ForeignKey(User)
@@ -24,6 +25,7 @@ class Request(models.Model):
     pi_rejection = models.BooleanField(default=False)
     req_created = models.DateTimeField(auto_now_add=True)
     req_last_modified = models.DateTimeField(auto_now=True)
+    id_md5 = models.CharField(max_length=200, blank=True, null=True, help_text="Auto-filled on save")
 
     #UserInfo
     first_name = models.CharField(default="", null=False, max_length=100)
@@ -47,8 +49,11 @@ class Request(models.Model):
             print "field does not exist"
             return False
         return self
-        
+                              
     def save(self, *args, **kwargs):
+        if not self.id_md5:
+            super(Request, self).save()      # save to have an 'id'
+            self.id_md5 =  md5.new(str(self.id)).hexdigest()
         super(Request, self).save(*args, **kwargs)
 
 class InstrumentRequest(models.Model):
@@ -77,22 +82,62 @@ def post_save_handler(sender, **kwargs):
     obj = kwargs['instance']
 
     if obj.rt_ticket_number > 0:
+        #new ticket        
         if ((obj.rc_approval == False) and
             (obj.rc_rejection == False) and
             (obj.pi_approval == False) and
             (obj.pi_rejection == False)):
-            print "sending mail to RC."
-            #new ticket
-            frm = "bobo@harvard.edu" #change this
-            to = ["eric_mattison@harvard.edu"] #change this
+
+            #send ticket to RCHelp
+            frm = obj.email
+            to = ["eric_mattison@harvard.edu"] #change this to RCHelp@fas.harvard.edu
             subject = "New Account Request for %s %s" % (obj.first_name, obj.last_name)
             body = ""
             body += "%s %s has requested an RC account.\n" % (obj.first_name, obj.last_name)
+            body += "To take this ticket, click here:\n"
             body += "https://rthelp.rc.fas.harvard.edu/Ticket/Display.html?id=%s\n" % (obj.rt_ticket_number)
+            body += "To approve or reject this request, click here:\n"
             body += "http://127.0.0.1:8000/admin/requestapp/request/%s/\n" % (obj.pk)
             send_mail(subject, body, frm, to, fail_silently=False)
-        if obj.rc_approval:
-            print "send email to PI"
+        #rc rejection
+        if ((obj.rc_approval == False) and
+            (obj.rc_rejection == True)):
+
+            #send rejection notice to requestor
+            frm = 'rchelp@fas.harvard.edu'
+            to = [obj.email]
+            subject = "Request for %s %s has been Rejected" % (obj.first_name, obj.last_name)
+            body = ""
+            body += "%s %s has requested an RC account.  This request has been rejected.\n" % (obj.first_name, obj.last_name)
+            body += "For more details, please contact rchelp@fas.harvard.edu\n"
+            send_mail(subject, body, frm, to, fail_silently=False)
+        #rc approval
+        if ((obj.rc_approval == True) and
+            (obj.rc_rejection == False) and
+            (obj.pi_approval == False) and
+            (obj.pi_rejection == False)):
+
+            #send email to PI
+            approve_link = "http://%s/request/pi-approval/%s/%s/" % ('127.0.0.1:8000', #change this
+                                                                     obj.id_md5,
+                                                                     md5.new(PI_APPROVAL['approved'] + str(obj.pk)).hexdigest()
+                                                                     )
+            reject_link = "http://%s/request/pi-approval/%s/%s/" % ('127.0.0.1:8000', #change this
+                                                                    obj.id_md5,
+                                                                    md5.new(PI_APPROVAL['rejected'] + str(obj.pk)).hexdigest()
+                                                                    )
+            frm = 'rchelp@fas.harvard.edu'
+            to = [obj.pi_email]
+            subject = "New RC Account Request for %s %s Requires Your Approval" % (obj.first_name, obj.last_name)
+            body = ""
+            body += "%s %s (%s) has requested an RC account.  Please use the links below to verify that you approve this user's account.\n" % (obj.first_name, obj.last_name, obj.email)
+            body += "I approve this account:\n"
+            body += "%s\n" % approve_link
+            body += "I reject this request:\n"
+            body += "%s\n" % reject_link
+            body += "If you have questions about this request, please contact %s or rchelp@fas.harvard.edu for more information.\n" % (obj.email)
+            send_mail(subject, body, frm, to, fail_silently=False)
+
         if obj.pi_approval:
             print "send email to lab admin, resource admin"
 

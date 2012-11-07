@@ -26,6 +26,14 @@ DATABASES = {
     }
 }
 
+# mail.fas is an Alias for smtp.fas
+#EMAIL_HOST = 'localhost' #140.247.111.38'   # and 140.247.111.238 #'smtp.lsdiv.harvard.edu'
+#EMAIL_PORT = 1025
+EMAIL_HOST = 'mail.fas.harvard.edu' #140.247.111.38'   # and 140.247.111.238 #'smtp.lsdiv.harvard.edu'
+EMAIL_HOST_USER = 'scientificapps@cgr.harvard.edu'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+SERVER_EMAIL = EMAIL_HOST_USER
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -161,6 +169,8 @@ RECAPTCHA_USE_SSL = True
 RT_URI = 'http://rthelp.rc.fas.harvard.edu//REST/1.0/'
 RT_USER = 'emattison'
 RT_PW = 'M@dd0g76'
+
+PI_APPROVAL = {'approved': 'approved', 'rejected': 'rejected'}
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to

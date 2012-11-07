@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.formtools.wizard.views import SessionWizardView
 from models import *
 from forms import CaptchaForm
-from signup.settings import RT_URI, RT_USER, RT_PW
+from signup.settings import RT_URI, RT_USER, RT_PW, PI_APPROVAL
 import rt
 
 def home(request):
@@ -88,7 +88,6 @@ class RequestWizard(SessionWizardView):
         #Save the LabAdmins and InstrumentRequests
         for form in data_list:
             if form['prefix'] == 'spinalresources':
-                lab_administrator = LabAdministrator() #request only one admin for all resources
                 for k,v in form.iteritems():
                     if 'resource_admins' in k:
                         instrument_request = InstrumentRequest()
@@ -99,7 +98,8 @@ class RequestWizard(SessionWizardView):
                         instrument_request.request = request
                         instrument_request.save()
 
-                    if (k == 'lab_administrators') or (k == 'extra_info'):
+                    if ((k == 'lab_administrators') and v) or ((k == 'extra_info') and v):
+                        lab_administrator = LabAdministrator() #request only one admin for all resources
                         if (k == 'lab_administrators') and (v != ""):
                             lab_admin_email, lab_admin_name = v.split(" - ")
                             lab_administrator.lab_administrator_name = lab_admin_name
@@ -132,8 +132,11 @@ class RequestWizard(SessionWizardView):
             ticket_text += " User has other needs.  See below.\n"
 
         for k,v in data_list[3].iteritems():
-            if v:
-                ticket_text += " - %s: %s\n" % (k, v)
+            if (('lab_administrators' in k) or 
+                ('extra_info' in k)):
+                ticket_text += " - %s: %s\n" % (k,v)
+            else:
+                ticket_text += " - %s\n" % (v)
 
         tracker = rt.Rt(RT_URI, RT_USER, RT_PW)
         tracker.login()
@@ -146,3 +149,40 @@ class RequestWizard(SessionWizardView):
 
         return render_to_response('formtools/wizard/done.html', {'data_list': data_list},)
 
+def pi_approval(r, id_md5, approval_option_md5):
+    data = {}
+    #get the request
+    try:
+        request = Request.objects.get(id_md5=id_md5)
+    except Request.DoesNotExist:
+        data.update({ 'err_pi_approval': True, 'err_request_not_found': True})
+        return render_to_response('pi_approval.html', data, context_instance=RequestContext(r))
+
+    #check to see if the approval string is valid
+    pk = request.pk
+    status_options = [md5.new(option + str(pk)).hexdigest() for option in PI_APPROVAL]
+    try:
+        assert(approval_option_md5 in status_options)
+    except AssertionError:
+        data.update({ 'err_invalid_approval': True })
+        return render_to_response('pi_approval.html', data, context_instance=RequestContext(r))
+
+    status_dict = dict([(k, md5.new(v + str(pk)).hexdigest()) for (k,v) in PI_APPROVAL.items()])
+    #change the ticket based on the choice
+
+    data.update({ 'first_name': request.first_name })
+    data.update({ 'last_name': request.last_name })
+
+    if approval_option_md5 == status_dict['approved']:
+        request.pi_approval = True
+        request.pi_rejection = False
+        request.save()
+        data.update({ 'approval_status': 'approved' })
+    else:
+        request.pi_approval = False
+        request.pi_rejection = True
+        request.save()
+        data.update({ 'approval_status': 'rejected' })
+    print data
+
+    return render_to_response('pi_approval.html', data, context_instance=RequestContext(r))
