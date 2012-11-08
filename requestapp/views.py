@@ -183,6 +183,5 @@ def pi_approval(r, id_md5, approval_option_md5):
         request.pi_rejection = True
         request.save()
         data.update({ 'approval_status': 'rejected' })
-    print data
 
     return render_to_response('pi_approval.html', data, context_instance=RequestContext(r))

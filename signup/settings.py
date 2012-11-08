@@ -169,6 +169,7 @@ RECAPTCHA_USE_SSL = True
 RT_URI = 'http://rthelp.rc.fas.harvard.edu//REST/1.0/'
 RT_USER = 'emattison'
 RT_PW = 'M@dd0g76'
+RT_EMAIL = 'rthelp@fas.harvard.edu'
 
 PI_APPROVAL = {'approved': 'approved', 'rejected': 'rejected'}
 
