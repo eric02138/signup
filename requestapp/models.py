@@ -31,13 +31,17 @@ class Request(models.Model):
     first_name = models.CharField(default="", null=False, max_length=100)
     last_name = models.CharField(default="", null=False, max_length=100)
     email = models.EmailField(default="", null=False)
-    email_confirm = models.EmailField(default="", null=False)
+    email_confirm = models.EmailField(default="", null=False, verbose_name="Please confirm that your email is correct")
     phone = PhoneNumberField(default="", null=False)
+    title = models.CharField(default="", null=False, max_length=100, verbose_name="Job Position or Title")
+    department = models.CharField(default="", null=False, max_length=100)
     #don't store the password in the database - send it directly to AD
 
-    pi_first_name = models.CharField(default="", null=False, max_length=100)
-    pi_last_name = models.CharField(default="", null=False, max_length=100)
-    pi_email = models.EmailField(null=False)
+    pi_first_name = models.CharField(default="", null=False, max_length=100, verbose_name="Faculty Sponsor's First Name")
+    pi_last_name = models.CharField(default="", null=False, max_length=100, verbose_name="Faculty Sponsor's Last Name")
+    pi_email = models.EmailField(null=False, verbose_name="Faculty Sponsor's Email Address")
+    pi_phone = PhoneNumberField(default="", null=False, verbose_name="Faculty Sponsor's Phone Number")
+    pi_mailing_address = models.CharField(default="", null=False, max_length=250, verbose_name="Faculty Sponsor's Mailing Address")
 
     def __unicode__(self):
         return "%s %s" % (self.first_name, self.last_name)

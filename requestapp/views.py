@@ -22,6 +22,10 @@ def is_storage_checked(wizard):
     cleaned_data = wizard.get_cleaned_data_for_step('servicechoices') or {}
     return cleaned_data.get('needs_storage', True)
 
+def is_software_checked(wizard):
+    cleaned_data = wizard.get_cleaned_data_for_step('softwarechoices') or {}
+    return cleaned_data.get('needs_software', True)
+
 def is_other_checked(wizard):
     cleaned_data = wizard.get_cleaned_data_for_step('servicechoices') or {}
     return cleaned_data.get('needs_other', True)
@@ -40,6 +44,7 @@ TEMPLATES = {"userinfo": "userinfo.html",
              "servicechoices": "servicechoices.html",
              "spinalresources": "spinalresources.html",
              "storage": "storage.html",
+             "softwarechoices": "software.html",
              "otherinfo": "otherinfo.html"}
 
 class RequestWizard(SessionWizardView):
@@ -60,10 +65,9 @@ class RequestWizard(SessionWizardView):
             
         #Format the data for output and filter out unnecessary instrument fields
         #This is a bit of a pain: form wizard expects a list of dicts - you can't name them.  Which sucks further down in the code...
-        data_list = []
+        data_list = {}
         for form in form_list:
             form_dict = {}
-            form_dict['prefix'] = form.prefix
             if form.prefix == 'spinalresources':
                 #only add information for selected instruments
                 for k,v in form.cleaned_data.iteritems():
@@ -76,18 +80,18 @@ class RequestWizard(SessionWizardView):
             else:
                 for k,v in form.cleaned_data.iteritems():
                     form_dict[k] = v
-            data_list.append(form_dict)
+            data_list.update({form.prefix: form_dict})
         
         #Save the Request
         request = Request()
-        for form in data_list:
+        for name, form in data_list.iteritems():
             for k,v in form.iteritems():
                 request.set_attr(k, v)
         request.save()
 
         #Save the LabAdmins and InstrumentRequests
-        for form in data_list:
-            if form['prefix'] == 'spinalresources':
+        for name, form in data_list.iteritems():
+            if name == 'spinalresources':
                 for k,v in form.iteritems():
                     if 'resource_admins' in k:
                         instrument_request = InstrumentRequest()
@@ -110,33 +114,49 @@ class RequestWizard(SessionWizardView):
                         lab_administrator.save()
 
         #create RT Ticket
-        subject_text = "Account Request for %s %s" % (data_list[0]['first_name'], data_list[0]['last_name'])
+        subject_text = "Account Request for %s %s" % (data_list['userinfo']['first_name'], data_list['userinfo']['last_name'])
         ticket_text = ""
         ticket_text += "User Info:\n"
-        ticket_text += " - First Name: %s\n" % (data_list[0]['first_name'])
-        ticket_text += " - Last Name: %s\n" % (data_list[0]['last_name'])
-        ticket_text += " - Email: %s\n" % (data_list[0]['email'])
-        ticket_text += " - Phone: %s\n" % (data_list[0]['phone'])
+        ticket_text += " - First Name: %s\n" % (data_list['userinfo']['first_name'])
+        ticket_text += " - Last Name: %s\n" % (data_list['userinfo']['last_name'])
+        ticket_text += " - Email: %s\n" % (data_list['userinfo']['email'])
+        ticket_text += " - Phone: %s\n" % (data_list['userinfo']['phone'])
         ticket_text += " Faculty Sponsor:\n"
-        ticket_text += " - PI First Name: %s\n" % (data_list[1]['pi_first_name'])
-        ticket_text += " - PI Last Name: %s\n" % (data_list[1]['pi_last_name'])
-        ticket_text += " - PI Email: %s\n" % (data_list[1]['pi_email'])
+        ticket_text += " - PI First Name: %s\n" % (data_list['piinfo']['pi_first_name'])
+        ticket_text += " - PI Last Name: %s\n" % (data_list['piinfo']['pi_last_name'])
+        ticket_text += " - PI Email: %s\n" % (data_list['piinfo']['pi_email'])
 
-        if data_list[2]['needs_spinal']:
+        if data_list['servicechoices']['needs_spinal']:
             ticket_text += " User needs instrument access.  See below.\n"
 
-        if data_list[2]['needs_storage']:
+        if data_list['servicechoices']['needs_storage']:
             ticket_text += " User needs network storage.  See below.\n"
 
-        if data_list[2]['needs_other']:
+        if data_list['servicechoices']['needs_software']:
+            ticket_text += " User needs Odyssey Software.  See below.\n"
+
+        if data_list['servicechoices']['needs_other']:
             ticket_text += " User has other needs.  See below.\n"
 
-        for k,v in data_list[3].iteritems():
+        ticket_text += " Spinal Resources\n"
+        for k,v in data_list['spinalresources'].iteritems():
             if (('lab_administrators' in k) or 
                 ('extra_info' in k)):
                 ticket_text += " - %s: %s\n" % (k,v)
             else:
                 ticket_text += " - %s\n" % (v)
+
+        ticket_text += " Software Choices\n"
+        for k,v in data_list['softwarechoices'].iteritems():
+            ticket_text += " - %s: %s\n" % (k, v)
+
+        ticket_text += " Storage\n"
+        for k,v in data_list['storage'].iteritems():
+            ticket_text += " - %s: %s\n" % (k, v)
+
+        ticket_text += " Other Comments\n"
+        for k,v in data_list['otherinfo'].iteritems(): 
+            ticket_text += " - %s: %s\n" % (k, v)
 
         tracker = rt.Rt(RT_URI, RT_USER, RT_PW)
         tracker.login()

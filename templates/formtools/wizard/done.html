@@ -9,8 +9,9 @@
 <h3>Congratulations.</h3>
 <p>You're done.  An email has been sent to Researcy Computing and your Faculty Sponsor to confirm that the information you have submitted is appropriate.  Your account should be set up in a day or two.  To check up on the status of your account request, you can send an email to <a href="mailto:rchelp@fas.harvard.edu?subject=Account%20Request">rchelp@fas.harvard.edu</a>.
 
-{% for form in data_list %}
-  {% if form.prefix == "userinfo" %}
+{% comment %}
+{% for name, form in data_list.iteritems %}
+  {% if name == "userinfo" %}
   <div>User Info:</div>
   <ul>
     {% for k,v in form.items %}
@@ -19,7 +20,7 @@
   </ul>
   {% endif %}
 
-  {% if form.prefix == "piinfo" %}
+  {% if name == "piinfo" %}
   <div>Faculty Sponsor:</div>
   <ul>
     {% for k,v in form.items %}
@@ -28,7 +29,7 @@
   </ul>
   {% endif %}
 
-  {% if form.prefix == "servicechoices" %}
+  {% if name == "servicechoices" %}
   <div>Service Choices:</div>
   <ul>
     {% for k,v in form.items %}
@@ -37,7 +38,7 @@
   </ul>
   {% endif %}
 
-  {% if form.prefix == "spinalresources" %}
+  {% if name == "spinalresources" %}
   <div>Instrument Selection:</div>
   <ul>
     {% for k,v in form.items %}
@@ -52,6 +53,6 @@
   {% endif %}
 
 {% endfor %}
-
+{% comment %}
 {{ data_list }}
 {% endblock %}
