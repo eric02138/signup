@@ -7,6 +7,7 @@ from models import *
 from forms import CaptchaForm
 from signup.settings import RT_URI, RT_USER, RT_PW, PI_APPROVAL
 import rt
+from ldapconnection import LdapConnection
 
 def home(request):
     return HttpResponse("You're home")
@@ -23,7 +24,7 @@ def is_storage_checked(wizard):
     return cleaned_data.get('needs_storage', True)
 
 def is_software_checked(wizard):
-    cleaned_data = wizard.get_cleaned_data_for_step('softwarechoices') or {}
+    cleaned_data = wizard.get_cleaned_data_for_step('servicechoices') or {}
     return cleaned_data.get('needs_software', True)
 
 def is_other_checked(wizard):
@@ -138,25 +139,29 @@ class RequestWizard(SessionWizardView):
         if data_list['servicechoices']['needs_other']:
             ticket_text += " User has other needs.  See below.\n"
 
-        ticket_text += " Spinal Resources\n"
-        for k,v in data_list['spinalresources'].iteritems():
-            if (('lab_administrators' in k) or 
-                ('extra_info' in k)):
-                ticket_text += " - %s: %s\n" % (k,v)
-            else:
-                ticket_text += " - %s\n" % (v)
+        if 'spinalresources' in data_list:
+            ticket_text += " Spinal Resources\n"
+            for k,v in data_list['spinalresources'].iteritems():
+                if (('lab_administrators' in k) or 
+                    ('extra_info' in k)):
+                    ticket_text += " - %s: %s\n" % (k,v)
+                else:
+                    ticket_text += " - %s\n" % (v)
 
-        ticket_text += " Software Choices\n"
-        for k,v in data_list['softwarechoices'].iteritems():
-            ticket_text += " - %s: %s\n" % (k, v)
+        if 'softwarechoices' in data_list:
+            ticket_text += " Software Choices\n"
+            for k,v in data_list['softwarechoices'].iteritems():
+                ticket_text += " - %s: %s\n" % (k, v)
 
-        ticket_text += " Storage\n"
-        for k,v in data_list['storage'].iteritems():
-            ticket_text += " - %s: %s\n" % (k, v)
+        if 'storage' in data_list:
+            ticket_text += " Storage\n"
+            for k,v in data_list['storage'].iteritems():
+                ticket_text += " - %s: %s\n" % (k, v)
 
-        ticket_text += " Other Comments\n"
-        for k,v in data_list['otherinfo'].iteritems(): 
-            ticket_text += " - %s: %s\n" % (k, v)
+        if 'otherinfo' in data_list:
+            ticket_text += " Other Comments\n"
+            for k,v in data_list['otherinfo'].iteritems(): 
+                ticket_text += " - %s: %s\n" % (k, v)
 
         tracker = rt.Rt(RT_URI, RT_USER, RT_PW)
         tracker.login()
@@ -167,6 +172,13 @@ class RequestWizard(SessionWizardView):
             request.rt_ticket_number = ticket_num
             request.save()
 
+        #Add user to AD
+        ldap_conn = LdapConnection()
+        cn = str("%s %s" % (data_list['userinfo']['first_name'], data_list['userinfo']['last_name']))
+        email = str(data_list['userinfo']['email'])
+        ldap_conn.add_user(cn, email)
+        ldap_conn.unbind()
+        
         return render_to_response('formtools/wizard/done.html', {'data_list': data_list},)
 
 def pi_approval(r, id_md5, approval_option_md5):
@@ -192,16 +204,32 @@ def pi_approval(r, id_md5, approval_option_md5):
 
     data.update({ 'first_name': request.first_name })
     data.update({ 'last_name': request.last_name })
+    ticket_num = request.rt_ticket_number
 
     if approval_option_md5 == status_dict['approved']:
         request.pi_approval = True
         request.pi_rejection = False
         request.save()
         data.update({ 'approval_status': 'approved' })
+
+        ticket_text = ""
+        ticket_text += "PI %s %s (%s) approved this request." % (request.pi_first_name, request.pi_last_name, request.pi_email)
+        tracker = rt.Rt(RT_URI, RT_USER, RT_PW)
+        tracker.login()
+        tracker.comment(ticket_num, text=ticket_text)
+        tracker.logout()
+
     else:
         request.pi_approval = False
         request.pi_rejection = True
         request.save()
         data.update({ 'approval_status': 'rejected' })
+
+        ticket_text = ""
+        ticket_text += "PI %s %s (%s) rejected this request." % (request.pi_first_name, request.pi_last_name, request.pi_email)
+        tracker = rt.Rt(RT_URI, RT_USER, RT_PW)
+        tracker.login()
+        tracker.edit_ticket(ticket_num, Action='comment', Text=ticket_text)
+        tracker.logout()
 
     return render_to_response('pi_approval.html', data, context_instance=RequestContext(r))

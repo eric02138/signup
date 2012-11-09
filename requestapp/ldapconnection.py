@@ -1,14 +1,16 @@
-import ldap, sys, codecs
+import ldap, sys, codecs, re
 from ldap import modlist
 ldap.set_option(ldap.OPT_REFERRALS, 0)
-ldap.set_option(ldap.OPT_PROTOCOL_VERSION, ldap.VERSION3)
+#ldap.set_option(ldap.OPT_PROTOCOL_VERSION, ldap.VERSION3)
 #allow a self-signed cert, for now
 ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
 #ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS)
 
 LDAP_SERVER = 'ldaps://10.242.28.54:636'
-AD_BIND_DN = 'accounttest@rcdev.domain'
-AD_BIND_PW = '!3ZW&5!X'
+#AD_BIND_DN = 'accounttest@rcdev.domain'
+#AD_BIND_PW = '!3ZW&5!X'
+AD_BIND_DN = 'administrator@rcdev.domain'
+AD_BIND_PW = 'P@l@d1n!'
 DOMAIN_STRING = 'rcdev.domain'
 BASE_DOMAIN = 'ou=Domain Users,dc=rcdev,dc=domain'
 NEW_ACCOUNT_OU = 'ou=new_accounts,ou=Domain Users,dc=rcdev,dc=domain'
@@ -43,19 +45,29 @@ class LdapConnection:
         filter = '(&(objectClass=person)(userPrincipalName=%s))' % (uPN)
         return self.search(filter)
 
-    def add_user(self):
-        # The dn of our new entry/object
+    def add_user(self, cn, mail, account_name=""):
 
-        dn='cn=John Brunelle,%s' % NEW_ACCOUNT_OU
+        #Don't allow users multiple accounts for the same email
+        try:
+            self.search_by_email(mail) == False
+        except ldap.LDAPError, error_message:
+            print "User with this email address already exists."
+            return False
+
+        # The dn of our new entry/object
+        dn='cn=%s,%s' % (cn, NEW_ACCOUNT_OU)
+        first_name, last_name = cn.split(" ", 1)
+        if account_name == "":
+            account_name = first_name[0].lower() + last_name.lower()
 
         record_attrs = [
             ('objectclass', ['top', 'person', 'organizationalperson', 'user']),
-            ('userPrincipalName', ['jab@%s' % DOMAIN_STRING]),
+            ('userPrincipalName', ['%s@%s' % (account_name, DOMAIN_STRING)]),
             ('distinguishedName', [dn]),
-            ('sAMAccountName', ['jab']),
-            ('mail', ['jab@harvard.edu']),
-            ('givenname', ['John']),
-            ('sn', ['Brunelle']),
+            ('sAMAccountName', [account_name]),
+            ('mail', [mail]),
+            ('givenname', [first_name]),
+            ('sn', [last_name]),
             ('ou', ['new_accounts', 'Domain Users']),
             ('userAccountControl', ['514']),
             ('pwdLastSet', ['-1']),
@@ -64,50 +76,40 @@ class LdapConnection:
         try:
             self.conn.add_s(dn, record_attrs)
         except ldap.LDAPError, error_message:
-            print "Error adding new user: %s" % error_message
-            return False
-
-        """
-        try:
-            self.passwd_s(dn, '', 'N0ss1sB0ss!')
-        except ldap.LDAPError, error_message:
-            print "Goddammit! %s" % error_message
-            return False
-        """
-
+            if "Already exists" in error_message.message.values():
+                #This may be dangerous - may allow multiple accounts
+                i = re.search(r'\d+', account_name)
+                account_name = re.sub(r'\d', '', account_name)
+                if i:
+                    i = int(i.group())
+                else:
+                    i = 0
+                i += 1
+                account_name = account_name + str(i)
+                cn = cn + str(i)
+                self.add_user(cn, mail, account_name)
+            else:
+                print "Error adding new user: %s" % error_message
+                return False
         return self
 
-    def set_password(self, cn):
+    def set_password(self, cn, password):
         dn = 'cn=%s,%s' % (cn, NEW_ACCOUNT_OU)
-        old_pw = 'Password4321'.encode('utf-16le')
-        new_pw = 'Password1234!'.encode('utf-16le')
-        #mod_acct = [(ldap.MOD_DELETE, 'unicodePwd', old_pw)]
-        try:
-            self.conn.passwd_s(dn, old_pw, new_pw)
-        except ldap.LDAPError, error_message:
-            print "Error setting password: %s" % error_message
-            return False
-        return True
+        new_pw = unicode("\"" + password + "\"", "iso-8859-1")
+        password_value =  new_pw.encode('utf-16-le')
+        mod_attrs = [(ldap.MOD_REPLACE, "unicodePwd", [password_value])]
 
-    """
-    Doesn't Work
-    def set_password(self, cn):
-        dn = 'cn=%s,%s' % (cn, NEW_ACCOUNT_OU)
-        old_pw = ''.encode('utf-16le')
-        new_pw = 'Password1234!'.encode('utf-16le')
         try:
-            self.conn.passwd_s(dn, old_pw, new_pw)
+            self.conn.modify_s(dn, mod_attrs)
         except ldap.LDAPError, error_message:
             print "Error setting password: %s" % error_message
             return False
         return True
-    """
 
     def enable_new_user(self, cn):
         #doesn't work with current AD configuration
         mod_acct = [(ldap.MOD_REPLACE, 'userAccountControl', '512')]
         dn = 'cn=%s,%s' % (cn, NEW_ACCOUNT_OU)
-        print dn
         try:
             self.conn.modify_s(dn, mod_acct)
         except ldap.LDAPError, error_message:
@@ -130,14 +132,9 @@ def test_search():
     print results
     ldap_conn.unbind()
 
-def test_add():
-    ldap_conn = LdapConnection()
-    print ldap_conn.add_user()
-    ldap_conn.unbind()
-
 if __name__=='__main__':
     ldap_conn = LdapConnection()
     #ldap_conn.enable_new_user('John Brunelle')
-    #ldap_conn.add_user()
-    ldap_conn.set_password('John Brunelle')
+    #ldap_conn.add_user('John Noss', 'jnoss@harvard.edu')
+    ldap_conn.set_password('John Noss', 'Tresspass123!')
     ldap_conn.unbind()

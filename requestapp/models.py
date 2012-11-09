@@ -7,7 +7,9 @@ from django.template.defaultfilters import slugify
 import datetime, md5
 from django.utils import timezone
 from django.core.mail import send_mail, EmailMessage
-from signup.settings import PI_APPROVAL, RT_EMAIL
+from signup.settings import RT_URI, RT_USER, RT_PW, RT_EMAIL, PI_APPROVAL
+import rt
+
 
 class RCUser(models.Model):
     rcuser = models.ForeignKey(User)
@@ -115,12 +117,20 @@ def post_save_handler(sender, **kwargs):
             body += "%s %s has requested an RC account.  This request has been rejected.\n" % (obj.first_name, obj.last_name)
             body += "For more details, please contact %s\n" % RT_HELP
             send_mail(subject, body, frm, to, fail_silently=False)
+
+            ticket_text = ""
+            ticket_text += "RC rejected this request."
+            tracker = rt.Rt(RT_URI, RT_USER, RT_PW)
+            tracker.login()
+            tracker.edit_ticket(obj.rt_ticket_number, Action='comment', Text=ticket_text)
+            tracker.logout()
+
         #rc approval
         if ((obj.rc_approval == True) and
             (obj.rc_rejection == False) and
             (obj.pi_approval == False) and
             (obj.pi_rejection == False)):
-            print "hello!"
+            #print request
             #send email to PI
             approve_link = "http://%s/request/pi-approval/%s/%s/" % ("127.0.0.1:8000", #change this
                                                                      obj.id_md5,
@@ -147,12 +157,31 @@ def post_save_handler(sender, **kwargs):
             body += "If you have questions about this request, please contact %s or %s for more information.\n" % (obj.email, RT_EMAIL)
             send_mail(subject, body, frm, to, fail_silently=False)
 
+            ticket_text = ""
+            ticket_text += "RC approved this request."
+            tracker = rt.Rt(RT_URI, RT_USER, RT_PW)
+            tracker.login()
+            tracker.edit_ticket(obj.rt_ticket_number, Action='comment', Text=ticket_text)
+            tracker.logout()
+
         #pi approval
         if ((obj.rc_approval == True) and
             (obj.rc_rejection == False) and
             (obj.pi_approval == True) and
             (obj.pi_rejection == False)):
             #Need code here to enable AD account, add account to correct lab group
+
+            #Notify Requestor
+            frm = RT_EMAIL
+            to = [obj.email]
+            subject = "%s %s your account has been approved." % (obj.first_name, obj.last_name)
+            body = ""
+            body += "%s, your RC account request has been approved.\n" % (obj.first_name)
+            body += "\n"
+            body += "If you have questions about this request, please contact %s for more information.\n" % (RT_EMAIL)
+            body += "Thank you.\n"
+            send_mail(subject, body, frm, to, fail_silently=False)
+
 
             instrument_requests = obj.instrumentrequest_set.all() #reverse lookup, clever, eh?
             for instrument_request in instrument_requests:
