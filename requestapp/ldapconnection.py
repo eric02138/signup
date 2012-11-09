@@ -7,10 +7,10 @@ ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
 #ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS)
 
 LDAP_SERVER = 'ldaps://10.242.28.54:636'
-#AD_BIND_DN = 'accounttest@rcdev.domain'
-#AD_BIND_PW = '!3ZW&5!X'
-AD_BIND_DN = 'administrator@rcdev.domain'
-AD_BIND_PW = 'P@l@d1n!'
+AD_BIND_DN = 'accounttest@rcdev.domain'
+AD_BIND_PW = '!3ZW&5!X'
+#AD_BIND_DN = 'administrator@rcdev.domain'
+#AD_BIND_PW = 'P@l@d1n!'
 DOMAIN_STRING = 'rcdev.domain'
 BASE_DOMAIN = 'ou=Domain Users,dc=rcdev,dc=domain'
 NEW_ACCOUNT_OU = 'ou=new_accounts,ou=Domain Users,dc=rcdev,dc=domain'
@@ -136,5 +136,5 @@ if __name__=='__main__':
     ldap_conn = LdapConnection()
     #ldap_conn.enable_new_user('John Brunelle')
     #ldap_conn.add_user('John Noss', 'jnoss@harvard.edu')
-    ldap_conn.set_password('John Noss', 'Tresspass123!')
+    ldap_conn.set_password('Luis Silva', 'Tresspass123!')
     ldap_conn.unbind()
