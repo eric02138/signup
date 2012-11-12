@@ -62,8 +62,8 @@ class UserInfoForm(ModelForm):
         if ((len(password) < min_password_length) or #too short
             (password == password.lower()) or #all lowercase
             (password == password.upper()) or #all uppercase
-            (any(passchar not in special_char_set for passchar in password)) or #no special chars
-            (any(numchar not in number_char_set for passchar in password)) or #no numbers
+            (not any(passchar in special_char_set for passchar in password)) or #no special chars
+            (not any(passchar in number_char_set for passchar in password)) #no numbers
             ): 
             msg = u'Passwords must be at least %s characters in length, contain UPPERCASE letters, lowercase letters, at least one special ch@racter and at least 1 number.' % str(min_password_length)
             self._errors["choose_password"] = self.error_class([msg])

@@ -43,7 +43,7 @@ class LdapConnection:
         filter = '(&(objectClass=person)(userPrincipalName=%s))' % (uPN)
         return self.search(filter)
 
-    def add_user(self, cn, mail, account_name=""):
+    def add_user(self, cn, mail, phone, title, department, account_name=""):
 
         #Don't allow users multiple accounts for the same email
         try:
@@ -64,8 +64,11 @@ class LdapConnection:
             ('distinguishedName', [dn]),
             ('sAMAccountName', [account_name]),
             ('mail', [mail]),
+            ('telephonenumber', [phone]),
             ('givenname', [first_name]),
             ('sn', [last_name]),
+            ('title', [title]),
+            ('department', [department]),
             ('ou', ['new_accounts', 'Domain Users']),
             ('userAccountControl', ['514']),
             ('pwdLastSet', ['-1']),
@@ -85,7 +88,7 @@ class LdapConnection:
                 i += 1
                 account_name = account_name + str(i)
                 cn = cn + str(i)
-                self.add_user(cn, mail, account_name)
+                self.add_user(cn, mail, phone, title, department, account_name)
             else:
                 print "Error adding new user: %s" % error_message
                 return False
@@ -93,7 +96,8 @@ class LdapConnection:
 
     def set_password(self, cn, password):
         dn = 'cn=%s,%s' % (cn, NEW_ACCOUNT_OU)
-        new_pw = unicode("\"" + password + "\"", "iso-8859-1")
+        #new_pw = unicode("\"" + password + "\"", "iso-8859-1")
+        new_pw = "\"" + password + "\""
         password_value =  new_pw.encode('utf-16-le')
         mod_attrs = [(ldap.MOD_REPLACE, "unicodePwd", [password_value])]
 
@@ -115,6 +119,18 @@ class LdapConnection:
             return False
         return True
 
+    def move_user(self, cn, ou):
+        dn = 'cn=%s,%s' % (cn, NEW_ACCOUNT_OU)
+        new_dn = 'cn=%s' % (cn)
+        new_superior = 'ou=%s,%s' % (ou, BASE_DOMAIN)
+        try:
+            self.conn.rename_s(dn, new_dn, new_superior)
+        except ldap.LDAPError, error_message:
+            print "Error moving to new ou: %s" % error_message
+            return False
+        return True
+
+        
 def test_connection():
     ldap_conn = LdapConnection()
     print ldap_conn
@@ -132,7 +148,5 @@ def test_search():
 
 if __name__=='__main__':
     ldap_conn = LdapConnection()
-    #ldap_conn.enable_new_user('John Brunelle')
-    #ldap_conn.add_user('John Noss', 'jnoss@harvard.edu')
-    ldap_conn.set_password('Luis Silva', 'Tresspass123!')
+    ldap_conn.add_user('John Noss', 'jnoss@harvard.edu', '617-673-7362', 'tech guy', 'RC')
     ldap_conn.unbind()

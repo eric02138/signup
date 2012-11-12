@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.core.mail import send_mail, EmailMessage
 from signup.settings import RT_URI, RT_USER, RT_PW, RT_EMAIL, PI_APPROVAL
 import rt
+from ldapconnection import *
 
 
 class RCUser(models.Model):
@@ -170,6 +171,12 @@ def post_save_handler(sender, **kwargs):
             (obj.pi_approval == True) and
             (obj.pi_rejection == False)):
             #Need code here to enable AD account, add account to correct lab group
+            cn = str("%s %s" % (obj.first_name, obj.last_name))
+            ldap_conn = LdapConnection()
+            ldap_conn.enable_new_user(cn)
+            new_ou = 'other_ou'
+            ldap_conn.move_user(cn, new_ou)
+            ldap_conn.unbind()
 
             #Notify Requestor
             frm = RT_EMAIL

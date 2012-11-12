@@ -66,6 +66,7 @@ class RequestWizard(SessionWizardView):
             
         #Format the data for output and filter out unnecessary instrument fields
         #This is a bit of a pain: form wizard expects a list of dicts - you can't name them.  Which sucks further down in the code...
+
         data_list = {}
         for form in form_list:
             form_dict = {}
@@ -176,7 +177,13 @@ class RequestWizard(SessionWizardView):
         ldap_conn = LdapConnection()
         cn = str("%s %s" % (data_list['userinfo']['first_name'], data_list['userinfo']['last_name']))
         email = str(data_list['userinfo']['email'])
-        ldap_conn.add_user(cn, email)
+        phone = str(data_list['userinfo']['phone'])
+        title = str(data_list['userinfo']['title'])
+        department = str(data_list['userinfo']['department'])
+        ldap_conn.add_user(cn, email, phone, title, department)
+        pw = str(data_list['userinfo']['choose_password'])
+        ldap_conn.set_password(cn, pw)
+        #ldap_conn.enable_new_user(cn)
         ldap_conn.unbind()
         
         return render_to_response('formtools/wizard/done.html', {'data_list': data_list},)
