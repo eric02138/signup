@@ -78,12 +78,12 @@ class UserInfoForm(ModelForm):
         email_search = ldap.search_by_email(email)
         #search by first and last name
         name_search = ldap.search_by_firstname_lastname(first_name, last_name)
-        ldap.unbind()
 
         if email_search or name_search:
             msg = '{0} {1} already has an RC account.<br />  If you have forgotten your password and need it to be reset, please <a href="mailto:mattison@g.harvard.edu?subject=\'Password Reset Request for {0} {1}\'">send an email to RCHelp</a>.'.format(first_name, last_name)
             msg = mark_safe(msg)
             raise forms.ValidationError(msg)
+        ldap.unbind()
 
         return cleaned_data
 

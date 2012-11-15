@@ -7,7 +7,7 @@ from django.template.defaultfilters import slugify
 import datetime, md5
 from django.utils import timezone
 from django.core.mail import send_mail, EmailMessage
-from signup.settings import RT_URI, RT_USER, RT_PW, RT_EMAIL, PI_APPROVAL
+from settings import RT_URI, RT_USER, RT_PW, RT_EMAIL, PI_APPROVAL
 import rt
 from ldapconnection import *
 

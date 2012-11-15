@@ -148,5 +148,7 @@ def test_search():
 
 if __name__=='__main__':
     ldap_conn = LdapConnection()
-    ldap_conn.add_user('John Noss', 'jnoss@harvard.edu', '617-673-7362', 'tech guy', 'RC')
+    #ldap_conn.add_user('John Noss', 'jnoss@harvard.edu', '617-673-7362', 'tech guy', 'RC')
+    result = ldap_conn.search_by_firstname_lastname('Luis', 'Silva')
+    print result
     ldap_conn.unbind()
