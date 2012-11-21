@@ -127,27 +127,17 @@ class PIInfoForm(ModelForm):
         """
         return cleaned_data
 
-"""
 class ServiceChoiceForm(ModelForm):
     class Meta:
         model = Service
         fields = ('name',)
+        #widget = forms.CheckboxSelectMultiple()
 
     def __init__(self, is_displayed_in_signup=None, **kwargs):
         super(ServiceChoiceForm, self).__init__(**kwargs)
-        if is_displayed_in_signup:
-            self.fields['name'].queryset = models.Service.objects.filter(is_displayed_in_signup=True)
-
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        return cleaned_data
-"""
-
-class ServiceChoiceForm(forms.Form):
-    needs_spinal = forms.BooleanField(required=False, label="Instrument Sign-up")
-    needs_storage = forms.BooleanField(required=False, label="Network Storage")
-    needs_software = forms.BooleanField(required=False, label="Odyssey Cluster Software")
-    needs_other = forms.BooleanField(required=False, label="Other")
+        self.fields['name'] = forms.ModelMultipleChoiceField(queryset=Service.objects.filter(is_displayed_in_signup=True), 
+                                                             widget=forms.CheckboxSelectMultiple())
+        #self.fields['name'].widget = forms.CheckboxSelectMultiple(queryset=Service.objects.filter(is_displayed_in_signup=True))
 
 class SpinalResourceListForm(forms.Form):
     #get the list of instruments and lab admins from 
