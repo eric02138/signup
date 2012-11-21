@@ -1,8 +1,9 @@
 from django import forms
 from django.forms import ModelForm
+from django.forms.models import modelformset_factory
 from django.utils.safestring import mark_safe
 from captcha.fields import ReCaptchaField
-from requestapp.models import Request
+from requestapp.models import Request, Service, LabGroup
 from django.contrib.localflavor.us.forms import USPhoneNumberField
 from ldapconnection import LdapConnection
 import json, urllib
@@ -125,6 +126,22 @@ class PIInfoForm(ModelForm):
             raise forms.ValidationError(msg)
         """
         return cleaned_data
+
+"""
+class ServiceChoiceForm(ModelForm):
+    class Meta:
+        model = Service
+        fields = ('name',)
+
+    def __init__(self, is_displayed_in_signup=None, **kwargs):
+        super(ServiceChoiceForm, self).__init__(**kwargs)
+        if is_displayed_in_signup:
+            self.fields['name'].queryset = models.Service.objects.filter(is_displayed_in_signup=True)
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        return cleaned_data
+"""
 
 class ServiceChoiceForm(forms.Form):
     needs_spinal = forms.BooleanField(required=False, label="Instrument Sign-up")

@@ -19,8 +19,19 @@ class RCUser(models.Model):
     def __unicode__(self):
         return self.rcuser.username
 
+class Service(models.Model):
+    name = models.CharField(default="", null=False, max_length=100)
+    is_displayed_in_signup = models.BooleanField(default=False)
+    doc_url = models.URLField(default="", blank=True, null=True, help_text='Link to documentation for this service')
+    description = models.CharField(default="", blank=True, null=True, max_length=500)
+
+    def __unicode__(self):
+        return "%s" % (self.name)
+
 class Request(models.Model):
     #RC Internal information
+    services = models.ManyToManyField(Service, null=True)
+
     rt_ticket_number = models.IntegerField(default=0)
     rc_approval = models.BooleanField(default=False)
     rc_rejection = models.BooleanField(default=False)
@@ -83,6 +94,15 @@ class LabAdministrator(models.Model):
     lab_administrator_name = models.CharField(default="", null=False, max_length=50)
     lab_administrator_email = models.EmailField(default="", null=False)
     extra_info = models.CharField(default="", null=True, max_length=500)
+
+class LabGroup(models.Model):
+    members = models.ManyToManyField(Request)
+    services = models.ManyToManyField(Service, null=True)
+    name = models.CharField(default="", null=False, max_length=100)
+    ad_group_name = models.CharField(default="", null=False, max_length=100, help_text="corresponding group name in RC Active Directory")
+
+    def __unicode__(self):
+        return "%s: %s" % (self.name, self.ad_group_name)
 
 def post_save_handler(sender, **kwargs):
     # the object which is saved can be accessed via kwargs 'instance' key.

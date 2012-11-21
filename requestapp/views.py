@@ -5,7 +5,8 @@ from django.core.urlresolvers import reverse
 from django.contrib.formtools.wizard.views import SessionWizardView
 from models import *
 from forms import CaptchaForm
-from signup.settings import RT_URI, RT_USER, RT_PW, PI_APPROVAL
+from settings import RT_URI, RT_USER, RT_PW, PI_APPROVAL
+#from signup.settings import RT_URI, RT_USER, RT_PW, PI_APPROVAL
 import rt
 from ldapconnection import LdapConnection
 
