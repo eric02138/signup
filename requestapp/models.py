@@ -23,10 +23,10 @@ class Service(models.Model):
     name = models.CharField(default="", null=False, max_length=100)
     is_displayed_in_signup = models.BooleanField(default=False)
     doc_url = models.URLField(default="", blank=True, null=True, help_text='Link to documentation for this service')
-    description = models.CharField(default="", blank=True, null=True, max_length=500)
+    description = models.TextField(default="", blank=True, null=True, max_length=500)
 
     def __unicode__(self):
-        return "%s" % (self.name)
+        return "%s, %s" % (self.name, self.doc_url)
 
 class Request(models.Model):
     #RC Internal information
@@ -96,13 +96,19 @@ class LabAdministrator(models.Model):
     extra_info = models.CharField(default="", null=True, max_length=500)
 
 class LabGroup(models.Model):
+    name = models.CharField(default="", blank=True, null=True, max_length=100, verbose_name="Lab Group")
+    ad_group_name = models.CharField(default="", null=True, max_length=100, help_text="corresponding group name in RC Active Directory")
     members = models.ManyToManyField(Request)
     services = models.ManyToManyField(Service, null=True)
-    name = models.CharField(default="", null=False, max_length=100)
-    ad_group_name = models.CharField(default="", null=False, max_length=100, help_text="corresponding group name in RC Active Directory")
+
+    pi_first_name = models.CharField(default="", blank=True, null=True, max_length=100, verbose_name="Faculty Sponsor's First Name")
+    pi_last_name = models.CharField(default="", blank=True, null=True, max_length=100, verbose_name="Faculty Sponsor's Last Name")
+    pi_email = models.EmailField(default="", blank=True, null=True, verbose_name="Faculty Sponsor's Email Address")
+    pi_phone = PhoneNumberField(default="", blank=True, null=True, verbose_name="Faculty Sponsor's Phone Number")
+    pi_mailing_address = models.TextField(default="", blank=True, null=True, max_length=250, verbose_name="Faculty Sponsor's Mailing Address")
 
     def __unicode__(self):
-        return "%s: %s" % (self.name, self.ad_group_name)
+        return "%s: %s %s" % (self.name, self.pi_first_name, self.pi_last_name)
 
 def post_save_handler(sender, **kwargs):
     # the object which is saved can be accessed via kwargs 'instance' key.

@@ -51,7 +51,7 @@ class UserInfoForm(ModelForm):
         if password != confirm_password:
             msg = u'Your passwords don\'t match.  Please retype your password.'
             self._errors["choose_password"] = self.error_class([msg])
-            #raise forms.ValidationError(msg)
+            raise forms.ValidationError(msg)
             
             del password
             del confirm_password
@@ -60,6 +60,7 @@ class UserInfoForm(ModelForm):
         min_password_length = 8
         special_char_set = set(c for c in '~!@#$%^&*()_+')
         number_char_set = set(c for c in '1234567890')
+
         if ((len(password) < min_password_length) or #too short
             (password == password.lower()) or #all lowercase
             (password == password.upper()) or #all uppercase
@@ -90,41 +91,69 @@ class UserInfoForm(ModelForm):
 
 class PIInfoForm(ModelForm):
     class Meta:
-        model = Request
-        fields = ('pi_first_name', 'pi_last_name', 'pi_email', 'pi_phone', 'pi_mailing_address')
-        widgets = {
-            'pi_mailing_address': forms.Textarea(attrs={'cols': 30, 'rows': 3}),
-        }
+        model = LabGroup
+        fields = ('name', 'pi_first_name', 'pi_last_name', 'pi_email', 'pi_phone', 'pi_mailing_address',)
+
+    def __init__(self, **kwargs):
+        super(PIInfoForm, self).__init__(**kwargs)
+        self.fields['name'] = forms.ModelChoiceField(queryset=LabGroup.objects.all(), label="Lab Group", required=False)
 
     def clean(self):
         cleaned_data = self.cleaned_data
+        name = cleaned_data.get('name')
         email = cleaned_data.get('pi_email')
         first_name = cleaned_data.get('pi_first_name')
         last_name = cleaned_data.get('pi_last_name')
+        email = cleaned_data.get('pi_email')
+        phone = cleaned_data.get('pi_phone')
+        mailing_address = cleaned_data.get('pi_mailing_address')
 
-        #require a harvard email address
-        if not email.lower().endswith('harvard.edu'):
-            msg = u'Email must end with "harvard.edu".'
-            self._errors["pi_email"] = self.error_class([msg])
-            raise forms.ValidationError(msg)
-            
-            del cleaned_data["email"]
+        # if the user hasn't selected a lab group from the drop-down list, make sure they have provided all the other fields
+        if not name:
+            if not email:
+                msg = u'Please provide the Faculty Sponsor\'s email address.'
+                self._errors["pi_email"] = self.error_class([msg])
+                raise forms.ValidationError(msg)
 
-        """ Removed, but might be useful in the future
-        #check if PI is not in AD
-        ad_result = []
-        ldap = LdapConnection()
-        #search by email
-        email_search = ldap.search_by_email(email)
-        #search by first and last name
-        name_search = ldap.search_by_firstname_lastname(first_name, last_name)
-        ldap.unbind()
+            #require a harvard email address, 
+            #might remove later if ldap search is authoritative
+            if not email.lower().endswith('harvard.edu'):
+                msg = u'Email must end with "harvard.edu".'
+                self._errors["pi_email"] = self.error_class([msg])
+                raise forms.ValidationError(msg)
+                del cleaned_data["email"]
 
-        if not (email_search or name_search):
-            msg = '{0} {1} is not a valid Harvard Principal Investigator.'.format(first_name, last_name)
-            msg = mark_safe(msg)
-            raise forms.ValidationError(msg)
-        """
+            if not first_name:
+                msg = u'Please provide the Faculty Sponsor\'s first name.'
+                self._errors["pi_first_name"] = self.error_class([msg])
+                raise forms.ValidationError(msg)
+
+            if not last_name:
+                msg = u'Please provide the Faculty Sponsor\'s last name.'
+                self._errors["pi_last_name"] = self.error_class([msg])
+                raise forms.ValidationError(msg)
+
+            if not phone:
+                msg = u'Please provide the Faculty Sponsor\'s phone number.'
+                self._errors["pi_phone"] = self.error_class([msg])
+                raise forms.ValidationError(msg)
+
+            """ Removed, but might be useful in the future
+            #check if PI is not in AD
+            ad_result = []
+            ldap = LdapConnection()
+            #search by email
+            email_search = ldap.search_by_email(email)
+            #search by first and last name
+            name_search = ldap.search_by_firstname_lastname(first_name, last_name)
+            ldap.unbind()
+
+            if not (email_search or name_search):
+                msg = '{0} {1} is not a valid Harvard Principal Investigator.'.format(first_name, last_name)
+                msg = mark_safe(msg)
+                raise forms.ValidationError(msg)
+            """
+
         return cleaned_data
 
 class ServiceChoiceForm(ModelForm):
