@@ -1,0 +1,51 @@
+#header-container, #page-footer {
+    max-width: 1150px;
+    min-width: 1150px;
+    width: 1150px;
+    margin: 0 auto;
+    padding: 0 10px;
+}
+
+#wrapper {
+    max-width: 1150px;
+    min-width: 1150px;
+    width: 1150px;
+    margin: 2px auto;
+}
+
+label {
+  display: inline;
+  font-size: 1em;
+}
+
+div.three_column
+{
+  -moz-column-count: 3; /* Firefox */
+  -webkit-column-count: 3; /* Safari and Chrome */
+  column-count: 3;
+  border-top: 1px solid #333;
+  border-bottom: 1px solid #333;
+}
+
+div.facility_name_div {
+  background-color: #ccc;
+  padding: .3em;
+}
+
+div.facility_div {
+  border: 1px solid #333;
+  padding: 1em;
+  margin-bottom: 1em;
+}
+
+.instrument_div {
+  font-size: 1.1em;
+  padding-left: 2em;
+  margin-bottom: .5em;
+}
+
+.lab_admin_div {
+  border: 1px solid #333;
+  padding: 1em;
+  margin-bottom: 1em;
+}

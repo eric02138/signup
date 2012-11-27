@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{% block title %}site name{% endblock %}</title>
+</head>
+
+<body>
+    <div id="content">
+      {% for k, v in context.iteritems %}
+         {{ k }}: {{ v}}
+      {% endfor %}
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
+

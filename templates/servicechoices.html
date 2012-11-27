@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block head %}
+{{ wizard.form.media }}
+{% endblock %}
+
+{% block content %}
+<!-- <p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p> -->
+<form action="" method="post">{% csrf_token %}
+<div class="dbx-box suf-widget widget_text"><h3 class="dbx-handle scheme dbx-box suf-widget widget_text">Account Sign-up &gt; Please choose the services you plan to use.</h3></div>
+<table class="form_table">
+{{ wizard.management_form }}
+{% if wizard.form.forms %}
+    {% for form in wizard.form.forms %}
+        {{ form }}
+    {% endfor %}
+{% else %}
+   {% for field in wizard.form %}
+     <tr>
+       <th>{{ field.label_tag }}</th>
+       <td>{{ field }}</td>
+     </tr>
+   {% endfor %}
+{% endif %}
+</table>
+{% if wizard.steps.prev %}
+<button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}">{% trans "first step" %}</button>
+<button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}">{% trans "prev step" %}</button>
+{% endif %}
+<input type="submit" value="{% trans "submit" %}"/>
+</form>
+{% endblock %}

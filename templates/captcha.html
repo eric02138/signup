@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+
+{% block content %}
+<form action="./" method="post">{% csrf_token %}
+<div class="dbx-box suf-widget widget_text"><h3 class="dbx-handle scheme dbx-box suf-widget widget_text">Account Sign-up &gt; Identity Verification</h3></div>
+<p>Before we can begin to collect your information, first we must verify that you are, in fact, human.  To do so, please write out the semi-obscured text below.</p>
+{{ form }}
+<input type="submit" value="Submit" />
+</form>
+{% endblock %}
+

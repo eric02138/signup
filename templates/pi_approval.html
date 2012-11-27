@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<div class="dbx-box suf-widget widget_text"><h3 class="dbx-handle scheme dbx-box suf-widget widget_text">Account {{ approval_status }}</h3></div>
+<h3>Thank you.</h3>
+<p>You have {{ approval_status }} {{ first_name }} {{ last_name }}'s request.</p>
+
+<p>If you have any questions, you can send an email to <a href="mailto:rchelp@fas.harvard.edu?subject=Account%20Request">rchelp@fas.harvard.edu</a>.
+
+{% endblock %}

@@ -1,0 +1,14 @@
+#header-container, #page-footer {
+    max-width: 1150px;
+    min-width: 1150px;
+    width: 1150px;
+    margin: 0 auto;
+    padding: 0 10px;
+}
+
+#wrapper {
+    max-width: 1150px;
+    min-width: 1150px;
+    width: 1150px;
+    margin: 2px auto;
+}

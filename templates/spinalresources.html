@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block head %}
+{{ wizard.form.media }}
+<script type='text/javascript'>
+$(function() {
+  $('#lab_admin_div').hide();
+  $('#extra_info_div').hide();
+
+  var nonfree_checkboxes = $("input[free_instrument='False']")
+  $('input[free_instrument]').click(function() {
+     //check all non-free checkboxes
+     if (nonfree_checkboxes.is(":checked")) {
+       $('#lab_admin_div').show('slow');
+     } else {
+       $('#lab_admin_div').hide('slow');
+     }
+  });
+
+  $('#extra_info_link').click(function(event) {
+    event.preventDefault();
+    $('#extra_info_div > textarea').val("");
+    $('#extra_info_div').toggle('slow');
+  });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- <p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p> -->
+<form action="" method="post">{% csrf_token %}
+<div class="dbx-box suf-widget widget_text"><h3 class="dbx-handle scheme dbx-box suf-widget widget_text">Account Sign-up &gt; Instrument Use Request</h3></div>
+Which instruments do you plan to use?  If you select fee-to-use instruments, you will be prompted to supply the name of your lab administrator so he/she can provide you with an Harvard expense code for your use of this instrument.
+
+{{ wizard.management_form }}
+<table class="form_table">
+{% if wizard.form.forms %}
+    {{ wizard.form.management_form }}
+    {% for form in wizard.form.forms %}
+        {{ form }}
+    {% endfor %}
+{% else %}
+    {% for field in wizard.form %}
+      {% if 'Facility name' in field.label %}
+        {% if forloop.first %}
+          <div class="three_column">
+          <div class="facility_div">
+        {% else %}
+	  </div><!-- end facility -->
+          <div class="facility_div">
+        {% endif %}
+        <div class="facility_name_div">
+        <h3>{{ field.value }}</h3>
+	</div>
+      {% else %}
+	{% if field.is_hidden %}
+	  {{ field }}
+        {% elif 'Lab administrators' in field.label %}
+          </div><!-- end facility -->
+	  </div> <!-- end three_column -->
+	  <div id="lab_admin_div" class="lab_admin_div">
+	    <h4>Select Lab Administrator</h4>
+	    <p>At least one instrument you selected requires an expense code to use.  Please select your lab administrator so he/she can assign you expense codes for your instrument usage.</p> 
+	    <p>{{ field }}</p>
+	    <p>If your lab administrator is not in this list, please <a href="#" id="extra_info_link">provide their name and contact information</a>.</p>
+	    <div id="extra_info_div">{{ wizard.form.extra_info }}</div>
+	  </div>
+	{% elif 'Extra info' not in field.label %}
+          <div class='instrument_div'>
+            {{ field.label_tag }}{{ field }}
+          </div>
+	{% endif %}
+      {% endif %}
+    {% endfor %}
+{% endif %}
+</table>
+
+{% if wizard.steps.prev %}
+<button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}">{% trans "first step" %}</button>
+<button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}">{% trans "prev step" %}</button>
+{% endif %}
+<input type="submit" value="{% trans "submit" %}"/>
+</form>
+{% endblock %}
