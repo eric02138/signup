@@ -18,19 +18,15 @@ def index(request):
 
 def is_spinal_checked(wizard):
     cleaned_data = wizard.get_cleaned_data_for_step('servicechoices') or {}
-    return cleaned_data.get('needs_spinal', True)
+    return cleaned_data.get('Instrument Sign-Up', True)
 
 def is_storage_checked(wizard):
     cleaned_data = wizard.get_cleaned_data_for_step('servicechoices') or {}
-    return cleaned_data.get('needs_storage', True)
-
-def is_software_checked(wizard):
-    cleaned_data = wizard.get_cleaned_data_for_step('servicechoices') or {}
-    return cleaned_data.get('needs_software', True)
+    return cleaned_data.get('Storage', True)
 
 def is_other_checked(wizard):
     cleaned_data = wizard.get_cleaned_data_for_step('servicechoices') or {}
-    return cleaned_data.get('needs_other', True)
+    return cleaned_data.get('Other', True)
 
 def captcha(request):
     form = CaptchaForm()
@@ -46,7 +42,6 @@ TEMPLATES = {"userinfo": "userinfo.html",
              "servicechoices": "servicechoices.html",
              "spinalresources": "spinalresources.html",
              "storage": "storage.html",
-             "softwarechoices": "software.html",
              "otherinfo": "otherinfo.html"}
 
 class RequestWizard(SessionWizardView):
@@ -84,12 +79,22 @@ class RequestWizard(SessionWizardView):
                 for k,v in form.cleaned_data.iteritems():
                     form_dict[k] = v
             data_list.update({form.prefix: form_dict})
+
+        print data_list
         
         #Save the Request
         request = Request()
         for name, form in data_list.iteritems():
             for k,v in form.iteritems():
                 request.set_attr(k, v)
+        request.ignore_me = True  #IGNORE ME!
+        request.save()
+
+        for k,v in data_list['servicechoices'].iteritems():
+            if v:
+                service = Service.objects.get(name=k)
+                request.services.add(service)
+        request.ignore_me = False
         request.save()
 
         #Save the LabAdmins and InstrumentRequests
@@ -129,16 +134,13 @@ class RequestWizard(SessionWizardView):
         ticket_text += " - PI Last Name: %s\n" % (data_list['piinfo']['pi_last_name'])
         ticket_text += " - PI Email: %s\n" % (data_list['piinfo']['pi_email'])
 
-        if data_list['servicechoices']['needs_spinal']:
+        if data_list['servicechoices']['Instrument Sign-Up']:
             ticket_text += " User needs instrument access.  See below.\n"
 
-        if data_list['servicechoices']['needs_storage']:
+        if data_list['servicechoices']['Storage']:
             ticket_text += " User needs network storage.  See below.\n"
 
-        if data_list['servicechoices']['needs_software']:
-            ticket_text += " User needs Odyssey Software.  See below.\n"
-
-        if data_list['servicechoices']['needs_other']:
+        if data_list['servicechoices']['Other']:
             ticket_text += " User has other needs.  See below.\n"
 
         if 'spinalresources' in data_list:
@@ -149,11 +151,6 @@ class RequestWizard(SessionWizardView):
                     ticket_text += " - %s: %s\n" % (k,v)
                 else:
                     ticket_text += " - %s\n" % (v)
-
-        if 'softwarechoices' in data_list:
-            ticket_text += " Software Choices\n"
-            for k,v in data_list['softwarechoices'].iteritems():
-                ticket_text += " - %s: %s\n" % (k, v)
 
         if 'storage' in data_list:
             ticket_text += " Storage\n"

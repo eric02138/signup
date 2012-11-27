@@ -26,7 +26,7 @@ class Service(models.Model):
     description = models.TextField(default="", blank=True, null=True, max_length=500)
 
     def __unicode__(self):
-        return "%s, %s" % (self.name, self.doc_url)
+        return "%s" % (self.name)
 
 class Request(models.Model):
     #RC Internal information
@@ -114,7 +114,7 @@ def post_save_handler(sender, **kwargs):
     # the object which is saved can be accessed via kwargs 'instance' key.
     obj = kwargs['instance']
 
-    if obj.rt_ticket_number > 0:
+    if (obj.rt_ticket_number > 0) and (obj.ignore_me == False):
         #new ticket        
         if ((obj.rc_approval == False) and
             (obj.rc_rejection == False) and

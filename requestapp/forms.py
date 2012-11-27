@@ -159,14 +159,15 @@ class PIInfoForm(ModelForm):
 class ServiceChoiceForm(ModelForm):
     class Meta:
         model = Service
-        fields = ('name',)
-        #widget = forms.CheckboxSelectMultiple()
+        fields = ()
 
     def __init__(self, is_displayed_in_signup=None, **kwargs):
         super(ServiceChoiceForm, self).__init__(**kwargs)
-        self.fields['name'] = forms.ModelMultipleChoiceField(queryset=Service.objects.filter(is_displayed_in_signup=True), 
-                                                             widget=forms.CheckboxSelectMultiple())
-        #self.fields['name'].widget = forms.CheckboxSelectMultiple(queryset=Service.objects.filter(is_displayed_in_signup=True))
+        #self.fields['name'] = forms.ModelMultipleChoiceField(queryset=Service.objects.filter(is_displayed_in_signup=True), 
+        #                                                     widget=forms.CheckboxSelectMultiple())
+        queryset = Service.objects.filter(is_displayed_in_signup=True)
+        for item in queryset:
+            self.fields[item.name] = forms.BooleanField(required=False, label=item.name)
 
 class SpinalResourceListForm(forms.Form):
     #get the list of instruments and lab admins from 
