@@ -6,22 +6,23 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 #change this on local installations
-cwd = os.getcwd()
+#cwd = os.getcwd()
+cwd =  os.path.realpath('/var/www/signup')
 APPLICATION_ROOT = os.path.realpath(os.path.join(cwd, '.'))
 
 ADMINS = (
-    # ('Your Name', 'your_email@example.com'),
+     ('Eric Mattison', 'mattison@g.harvard.edu'),
 )
 
 MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'db_requests',                      # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
+        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'db_account',                      # Or path to database file if using sqlite3.
+        'USER': 'db_account',                      # Not used with sqlite3.
+        'PASSWORD': 'rcnewaccountapp',                  # Not used with sqlite3.
+        'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
@@ -81,6 +82,7 @@ STATIC_URL = '/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
+    "/var/www/signup/requestapp/static",
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.

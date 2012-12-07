@@ -4,14 +4,23 @@ ldap.set_option(ldap.OPT_REFERRALS, 0)
 #ldap.set_option(ldap.OPT_PROTOCOL_VERSION, ldap.VERSION3)
 #allow a self-signed cert, for now
 ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
-#ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS)
+#ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, True)
+#TLS_CERTFILE = "/etc/pki/tls/private/ca.csr"
+#TLS_KEYFILE = "/etc/pki/tls/private/ca.key"
+#ldap.set_option(ldap.OPT_X_TLS_CERTFILE, "/etc/pki/tls/private/ca.csr")
+#ldap.set_option(ldap.OPT_X_TLS_KEYFILE, "/etc/pki/tls/private/ca.key")
 
 LDAP_SERVER = 'ldaps://10.242.28.54:636'
+#LDAP_SERVER = 'ldaps://10.242.89.13:636'
 AD_BIND_DN = 'accounttest@rcdev.domain'
+#AD_BIND_DN = 'accounttest@rc.domain'
 AD_BIND_PW = '!3ZW&5!X'
 DOMAIN_STRING = 'rcdev.domain'
+#DOMAIN_STRING = 'rc.domain'
 BASE_DOMAIN = 'ou=Domain Users,dc=rcdev,dc=domain'
+#BASE_DOMAIN = 'ou=Domain Users,dc=rc,dc=domain'
 NEW_ACCOUNT_OU = 'ou=new_accounts,ou=Domain Users,dc=rcdev,dc=domain'
+#NEW_ACCOUNT_OU = 'ou=new_accounts,ou=Domain Users,dc=rc,dc=domain'
 
 class LdapConnection:
     #connect to the server

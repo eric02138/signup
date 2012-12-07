@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import os
 import sys
+#sys.path.append('/usr/lib/python2.6/site-packages/django')
+#sys.path.append('/var/www')
 
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")

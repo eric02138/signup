@@ -98,7 +98,7 @@ class LabAdministrator(models.Model):
 class LabGroup(models.Model):
     name = models.CharField(default="", blank=True, null=True, max_length=100, verbose_name="Lab Group")
     ad_group_name = models.CharField(default="", null=True, max_length=100, help_text="corresponding group name in RC Active Directory")
-    members = models.ManyToManyField(Request)
+    members = models.ManyToManyField(User)
     services = models.ManyToManyField(Service, null=True)
 
     pi_first_name = models.CharField(default="", blank=True, null=True, max_length=100, verbose_name="Faculty Sponsor's First Name")
