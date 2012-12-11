@@ -11,13 +11,20 @@ from settings import RT_URI, RT_USER, RT_PW, RT_EMAIL, PI_APPROVAL
 import rt
 from ldapconnection import *
 
-
-class RCUser(models.Model):
-    rcuser = models.ForeignKey(User)
-    phone_number = PhoneNumberField(blank=True, null=True)
+class RCUser(User):
+    phone = PhoneNumberField(default="", null=False)
+    title = models.CharField(default="", null=False, max_length=100, verbose_name="Job Position or Title")
+    department = models.CharField(default="", null=False, max_length=100)
 
     def __unicode__(self):
-        return self.rcuser.username
+        return self.username
+
+class PIUser(User):
+    phone = PhoneNumberField(default="", null=False)
+    mailing_address = models.CharField(default="", null=False, max_length=250, verbose_name="Mailing Address")
+
+    def __unicode__(self):
+        return self.username
 
 class Service(models.Model):
     name = models.CharField(default="", null=False, max_length=100)
@@ -42,23 +49,23 @@ class Request(models.Model):
     id_md5 = models.CharField(max_length=200, blank=True, null=True, help_text="Auto-filled on save")
 
     #UserInfo
-    first_name = models.CharField(default="", null=False, max_length=100)
-    last_name = models.CharField(default="", null=False, max_length=100)
-    email = models.EmailField(default="", null=False)
-    email_confirm = models.EmailField(default="", null=False, verbose_name="Please confirm that your email is correct")
-    phone = PhoneNumberField(default="", null=False)
-    title = models.CharField(default="", null=False, max_length=100, verbose_name="Job Position or Title")
-    department = models.CharField(default="", null=False, max_length=100)
+    rcuser = models.ForeignKey(RCUser, verbose_name="User Info")
+    #first_name = models.CharField(default="", null=False, max_length=100)
+    #last_name = models.CharField(default="", null=False, max_length=100)
+    #email = models.EmailField(default="", null=False)
+    #email_confirm = models.EmailField(default="", null=False, verbose_name="Please confirm that your email is correct")
+    #phone = PhoneNumberField(default="", null=False)
     #don't store the password in the database - send it directly to AD
 
-    pi_first_name = models.CharField(default="", null=False, max_length=100, verbose_name="Faculty Sponsor's First Name")
-    pi_last_name = models.CharField(default="", null=False, max_length=100, verbose_name="Faculty Sponsor's Last Name")
-    pi_email = models.EmailField(null=False, verbose_name="Faculty Sponsor's Email Address")
-    pi_phone = PhoneNumberField(default="", null=False, verbose_name="Faculty Sponsor's Phone Number")
-    pi_mailing_address = models.CharField(default="", null=False, max_length=250, verbose_name="Faculty Sponsor's Mailing Address")
+    pi = models.ForeignKey(PIUser)
+    #pi_first_name = models.CharField(default="", null=False, max_length=100, verbose_name="Faculty Sponsor's First Name")
+    #pi_last_name = models.CharField(default="", null=False, max_length=100, verbose_name="Faculty Sponsor's Last Name")
+    #pi_email = models.EmailField(null=False, verbose_name="Faculty Sponsor's Email Address")
+    #pi_phone = PhoneNumberField(default="", null=False, verbose_name="Faculty Sponsor's Phone Number")
+    #pi_mailing_address = models.CharField(default="", null=False, max_length=250, verbose_name="Faculty Sponsor's Mailing Address")
 
     def __unicode__(self):
-        return "%s %s" % (self.first_name, self.last_name)
+        return "%s %s" % (self.rcuser.first_name, self.rcuser.last_name)
 
     def set_attr(self, key, value):
         try:
@@ -101,14 +108,15 @@ class LabGroup(models.Model):
     members = models.ManyToManyField(User)
     services = models.ManyToManyField(Service, null=True)
 
-    pi_first_name = models.CharField(default="", blank=True, null=True, max_length=100, verbose_name="Faculty Sponsor's First Name")
-    pi_last_name = models.CharField(default="", blank=True, null=True, max_length=100, verbose_name="Faculty Sponsor's Last Name")
-    pi_email = models.EmailField(default="", blank=True, null=True, verbose_name="Faculty Sponsor's Email Address")
-    pi_phone = PhoneNumberField(default="", blank=True, null=True, verbose_name="Faculty Sponsor's Phone Number")
-    pi_mailing_address = models.TextField(default="", blank=True, null=True, max_length=250, verbose_name="Faculty Sponsor's Mailing Address")
+    pi = models.OneToOneField(PIUser, blank=True, null=True)
+    #pi_first_name = models.CharField(default="", blank=True, null=True, max_length=100, verbose_name="Faculty Sponsor's First Name")
+    #pi_last_name = models.CharField(default="", blank=True, null=True, max_length=100, verbose_name="Faculty Sponsor's Last Name")
+    #pi_email = models.EmailField(default="", blank=True, null=True, verbose_name="Faculty Sponsor's Email Address")
+    #pi_phone = PhoneNumberField(default="", blank=True, null=True, verbose_name="Faculty Sponsor's Phone Number")
+    #pi_mailing_address = models.TextField(default="", blank=True, null=True, max_length=250, verbose_name="Faculty Sponsor's Mailing Address")
 
     def __unicode__(self):
-        return "%s: %s %s" % (self.name, self.pi_first_name, self.pi_last_name)
+        return "%s: %s %s" % (self.name, self.pi.first_name, self.pi.last_name)
 
 def post_save_handler(sender, **kwargs):
     # the object which is saved can be accessed via kwargs 'instance' key.
@@ -122,11 +130,11 @@ def post_save_handler(sender, **kwargs):
             (obj.pi_rejection == False)):
 
             #send ticket to RCHelp
-            frm = obj.email
+            frm = obj.rcuser.email
             to = ["eric_mattison@harvard.edu"] #change this to RCHelp@fas.harvard.edu
-            subject = "New Account Request for %s %s" % (obj.first_name, obj.last_name)
+            subject = "New Account Request for %s %s" % (obj.rcuser.first_name, obj.rcuser.last_name)
             body = ""
-            body += "%s %s has requested an RC account.\n" % (obj.first_name, obj.last_name)
+            body += "%s %s has requested an RC account.\n" % (obj.rcuser.first_name, obj.rcuser.last_name)
             body += "To take this ticket, click here:\n"
             body += "https://rthelp.rc.fas.harvard.edu/Ticket/Display.html?id=%s\n" % (obj.rt_ticket_number) #change this later
             body += "To approve or reject this request, click here:\n"
@@ -138,10 +146,10 @@ def post_save_handler(sender, **kwargs):
 
             #send rejection notice to requestor
             frm = RT_EMAIL
-            to = [obj.email]
-            subject = "Request for %s %s has been rejected by RC" % (obj.first_name, obj.last_name)
+            to = [obj.rcuser.email]
+            subject = "Request for %s %s has been rejected by RC" % (obj.rcuser.first_name, obj.rcuser.last_name)
             body = ""
-            body += "%s %s has requested an RC account.  This request has been rejected.\n" % (obj.first_name, obj.last_name)
+            body += "%s %s has requested an RC account.  This request has been rejected.\n" % (obj.rcuser.first_name, obj.rcuser.last_name)
             body += "For more details, please contact %s\n" % RT_HELP
             send_mail(subject, body, frm, to, fail_silently=False)
 
@@ -168,12 +176,12 @@ def post_save_handler(sender, **kwargs):
                                                                     md5.new(PI_APPROVAL['rejected'] + str(obj.pk)).hexdigest()
                                                                     )
             frm = RT_EMAIL
-            to = [obj.pi_email]
-            subject = "New RC Account Request for %s %s Requires Your Approval" % (obj.first_name, obj.last_name)
+            to = [obj.pi.email]
+            subject = "New RC Account Request for %s %s Requires Your Approval" % (obj.rcuser.first_name, obj.rcuser.last_name)
             body = ""
-            body += "%s,\n" % obj.pi_first_name
+            body += "%s,\n" % obj.pi.first_name
             body += "\n"
-            body += "%s %s (%s) has requested an RC account.  Please use the links below to verify that you approve this user's account.\n" % (obj.first_name, obj.last_name, obj.email)
+            body += "%s %s (%s) has requested an RC account.  Please use the links below to verify that you approve this user's account.\n" % (obj.rcuser.first_name, obj.rcuser.last_name, obj.rcuser.email)
             body += "\n"
             body += "I approve this account:\n"
             body += "%s\n" % approve_link
@@ -181,7 +189,7 @@ def post_save_handler(sender, **kwargs):
             body += "I reject this request:\n"
             body += "%s\n" % reject_link
             body += "\n"
-            body += "If you have questions about this request, please contact %s or %s for more information.\n" % (obj.email, RT_EMAIL)
+            body += "If you have questions about this request, please contact %s or %s for more information.\n" % (obj.rcuser.email, RT_EMAIL)
             send_mail(subject, body, frm, to, fail_silently=False)
 
             ticket_text = ""
@@ -197,7 +205,7 @@ def post_save_handler(sender, **kwargs):
             (obj.pi_approval == True) and
             (obj.pi_rejection == False)):
             #Need code here to enable AD account, add account to correct lab group
-            cn = str("%s %s" % (obj.first_name, obj.last_name))
+            cn = str("%s %s" % (obj.rcuser.first_name, obj.rcuser.last_name))
             ldap_conn = LdapConnection()
             ldap_conn.enable_new_user(cn)
             new_ou = 'other_ou'
@@ -206,10 +214,10 @@ def post_save_handler(sender, **kwargs):
 
             #Notify Requestor
             frm = RT_EMAIL
-            to = [obj.email]
-            subject = "%s %s your account has been approved." % (obj.first_name, obj.last_name)
+            to = [obj.rcuser.email]
+            subject = "%s %s your account has been approved." % (obj.rcuser.first_name, obj.rcuser.last_name)
             body = ""
-            body += "%s, your RC account request has been approved.\n" % (obj.first_name)
+            body += "%s, your RC account request has been approved.\n" % (obj.rcuser.first_name)
             body += "\n"
             body += "If you have questions about this request, please contact %s for more information.\n" % (RT_EMAIL)
             body += "Thank you.\n"
@@ -228,19 +236,19 @@ def post_save_handler(sender, **kwargs):
                 to = [RT_EMAIL]
                 bcc_emails = [admin.split(", ")[1] for admin in resource_administrators]
                 bcc = bcc_emails
-                subject = "%s %s has requested access to %s" % (obj.first_name, obj.last_name, resource_name)
+                subject = "%s %s has requested access to %s" % (obj.rcuser.first_name, obj.rcuser.last_name, resource_name)
                 body = ""
                 body += "Hello,\n"
                 body += "\n"
                 body += "%s %s (%s) has requested access to %s.  Please log in to SPINAL to add this user to the group %s:\n" % (
-                    obj.first_name, 
-                    obj.last_name, 
-                    obj.email, 
+                    obj.rcuser.first_name, 
+                    obj.rcuser.last_name, 
+                    obj.rcuser.email, 
                     resource_name,
                     resource_group)
                 body += "%s\n" % spinal_g_group_link
                 body += "\n"
-                body += "If you have questions about this request, please contact %s or %s for more information.\n" % (obj.email, RT_EMAIL)
+                body += "If you have questions about this request, please contact %s or %s for more information.\n" % (obj.rcuser.email, RT_EMAIL)
                 email = EmailMessage(subject, body, frm, to, bcc)
                 email.send(fail_silently=False)
 
@@ -257,26 +265,26 @@ def post_save_handler(sender, **kwargs):
                     spinal_link = "https://webapps.sciences.fas.harvard.edu/spinal/"
                     frm = RT_EMAIL
                     to = [lab_administrator_email]
-                    subject = "SPINAL Instrument Request for %s %s Requires Expense Code Assignment" % (obj.first_name, obj.last_name)
+                    subject = "SPINAL Instrument Request for %s %s Requires Expense Code Assignment" % (obj.rcuser.first_name, obj.rcuser.last_name)
                     body = ""
                     body += "%s,\n" % lab_administrator_firstname
                     body += "\n"
-                    body += "%s %s (%s) has requested the use of instrument(s) which require Harvard Expense Codes to reserve.  Please log in to SPINAL to assign the appropriate expense codes for this user.\n" % (obj.first_name, obj.last_name, obj.email)
+                    body += "%s %s (%s) has requested the use of instrument(s) which require Harvard Expense Codes to reserve.  Please log in to SPINAL to assign the appropriate expense codes for this user.\n" % (obj.rcuser.first_name, obj.rcuser.last_name, obj.rcuser.email)
                     body += "%s\n" % spinal_link
                     body += "\n"
-                    body += "If you have questions about this request, please contact %s or %s for more information.\n" % (obj.email, RT_EMAIL)
+                    body += "If you have questions about this request, please contact %s or %s for more information.\n" % (obj.rcuser.email, RT_EMAIL)
                     body += "Thank you.\n"
                     send_mail(subject, body, frm, to, fail_silently=False)
 
                 else: 
                     #send email to RT
-                    frm = obj.email
+                    frm = obj.rcuser.email
                     to = RT_EMAIL
-                    subject = "SPINAL Instrument Request for %s %s Requires Expense Code Assignment" % (obj.first_name, obj.last_name)
+                    subject = "SPINAL Instrument Request for %s %s Requires Expense Code Assignment" % (obj.rcuser.first_name, obj.rcuser.last_name)
                     body = ""
                     body += "Hi,\n" % lab_administrator_firstname
                     body += "\n"
-                    body += "%s %s (%s) has requested the use of instrument(s) which require Harvard Expense Codes to reserve.\n" % (obj.first_name, obj.last_name, obj.email)
+                    body += "%s %s (%s) has requested the use of instrument(s) which require Harvard Expense Codes to reserve.\n" % (obj.rcuser.first_name, obj.rcuser.last_name, obj.rcuser.email)
                     body += "However, %s could not find his/her lab administrator in the drop-down list provided.  Perhaps the following information will help:\n" % obj.first_name
                     body += "%s\n" % lab_administrator_extra_info
                     body += "Thank you.\n"
@@ -287,14 +295,14 @@ def post_save_handler(sender, **kwargs):
 
             #send rejection notice to requestor
             frm = RT_EMAIL
-            to = [obj.email]
-            subject = "Request for %s %s has been rejected by Faculty" % (obj.first_name, obj.last_name)
+            to = [obj.rcuser.email]
+            subject = "Request for %s %s has been rejected by Faculty" % (obj.rcuser.first_name, obj.rcuser.last_name)
             body = ""
-            body += "%s,\n" % obj.first_name
+            body += "%s,\n" % obj.rcuser.first_name
             body += "\n"
-            body += "Sorry, your request for an RC account was rejected by %s %s.\n" % (obj.pi_first_name, obj.last_name)
+            body += "Sorry, your request for an RC account was rejected by %s %s.\n" % (obj.pi.first_name, obj.pi.last_name)
             body += "\n"
-            body += "For more details, please contact %s\n" % obj.pi_email
+            body += "For more details, please contact %s\n" % obj.pi.email
             send_mail(subject, body, frm, to, fail_silently=False)
 
 

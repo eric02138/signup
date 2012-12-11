@@ -80,13 +80,48 @@ class RequestWizard(SessionWizardView):
                     form_dict[k] = v
             data_list.update({form.prefix: form_dict})
 
-        print data_list
-        
         #Save the Request
         request = Request()
+        lab_group = None
         for name, form in data_list.iteritems():
-            for k,v in form.iteritems():
-                request.set_attr(k, v)
+            if 'userinfo' in name:
+                rcuser = RCUser()
+                username = "%s%s" % (form['first_name'][0:1], form['last_name'])
+                rcuser.username = username.lower()
+                rcuser.password = "NA"
+                rcuser.first_name = form['first_name']
+                rcuser.last_name = form['last_name']
+                rcuser.email = form['email']
+                rcuser.title = form['title']
+                rcuser.phone = form['phone']
+                rcuser.department = form['department']
+                rcuser.save()
+            elif 'piinfo' in name:
+                #If the lab was selected from the drop down menu, get the existing pi from the lab group.
+                #Otherwise, create a new pi using the form fields.
+                if form['name']:
+                    piuser = form['name'].pi
+                    lab_group = form['name']
+                else:
+                    print form
+                    piuser = PIUser()
+                    username = "%s%s" % (form['first_name'][0:1], form['last_name'])
+                    piuser.username = username.lower()
+                    piuser.password = "NA"
+                    piuser.first_name = form['first_name']
+                    piuser.last_name = form['last_name']
+                    piuser.email = form['email']
+                    piuser.phone = form['phone']
+                    piuser.mailing_address = form['mailing_address']
+                    piuser.save()
+            else:
+                for k,v in form.iteritems():
+                    request.set_attr(k, v)
+        request.rcuser = rcuser
+        if lab_group:
+            lab_group.members.add(rcuser)
+            lab_group.save()
+        request.pi = piuser
         request.ignore_me = True  #IGNORE ME!
         request.save()
 
@@ -124,21 +159,31 @@ class RequestWizard(SessionWizardView):
         #create RT Ticket
         subject_text = "Account Request for %s %s" % (data_list['userinfo']['first_name'], data_list['userinfo']['last_name'])
         ticket_text = ""
-        ticket_text += "User Info:\n"
+        ticket_text += " To approve or reject this request, click here:\n"
+        ticket_text += " http://%s/admin/requestapp/request/%s/\n" % ('127.0.0.1:8000', request.pk) # change url
+        ticket_text += " \n"
+        ticket_text += " User Info:\n"
         ticket_text += " - First Name: %s\n" % (data_list['userinfo']['first_name'])
         ticket_text += " - Last Name: %s\n" % (data_list['userinfo']['last_name'])
         ticket_text += " - Email: %s\n" % (data_list['userinfo']['email'])
         ticket_text += " - Phone: %s\n" % (data_list['userinfo']['phone'])
+        ticket_text += " \n"
         ticket_text += " Faculty Sponsor:\n"
-        ticket_text += " - PI First Name: %s\n" % (data_list['piinfo']['pi_first_name'])
-        ticket_text += " - PI Last Name: %s\n" % (data_list['piinfo']['pi_last_name'])
-        ticket_text += " - PI Email: %s\n" % (data_list['piinfo']['pi_email'])
-
+        if not data_list['piinfo']['name']:
+            #lab does not exist, RC needs to create this lab
+            ticket_text += " This is a new PI/Lab Group.  Please use the Django Admin to create this group.\n"
+        ticket_text += " - PI First Name: %s\n" % (data_list['piinfo']['first_name'])
+        ticket_text += " - PI Last Name: %s\n" % (data_list['piinfo']['last_name'])
+        ticket_text += " - PI Email: %s\n" % (data_list['piinfo']['email'])
+        ticket_text += " - PI Mailing Address: %s\n" % (data_list['piinfo']['mailing_address'])
+        ticket_text += " \n"
+        ticket_text += " Services:\n"
         if data_list['servicechoices']['Instrument Sign-Up']:
             ticket_text += " User needs instrument access.  See below.\n"
 
         if data_list['servicechoices']['Storage']:
             ticket_text += " User needs network storage.  See below.\n"
+
 
         if data_list['servicechoices']['Other']:
             ticket_text += " User has other needs.  See below.\n"
@@ -218,7 +263,7 @@ def pi_approval(r, id_md5, approval_option_md5):
         data.update({ 'approval_status': 'approved' })
 
         ticket_text = ""
-        ticket_text += "PI %s %s (%s) approved this request." % (request.pi_first_name, request.pi_last_name, request.pi_email)
+        ticket_text += "PI %s %s (%s) approved this request." % (request.piuser.first_name, request.piuser.last_name, request.piuser.email)
         tracker = rt.Rt(RT_URI, RT_USER, RT_PW)
         tracker.login()
         tracker.comment(ticket_num, text=ticket_text)
@@ -231,7 +276,7 @@ def pi_approval(r, id_md5, approval_option_md5):
         data.update({ 'approval_status': 'rejected' })
 
         ticket_text = ""
-        ticket_text += "PI %s %s (%s) rejected this request." % (request.pi_first_name, request.pi_last_name, request.pi_email)
+        ticket_text += "PI %s %s (%s) rejected this request." % (request.piuser.first_name, request.piuser.last_name, request.piuser.email)
         tracker = rt.Rt(RT_URI, RT_USER, RT_PW)
         tracker.login()
         tracker.edit_ticket(ticket_num, Action='comment', Text=ticket_text)
