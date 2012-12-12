@@ -7,10 +7,11 @@ TEMPLATE_DEBUG = DEBUG
 
 #change this on local installations
 cwd = os.getcwd()
+#cwd =  os.path.realpath('/var/www/signup')
 APPLICATION_ROOT = os.path.realpath(os.path.join(cwd, '.'))
 
 ADMINS = (
-    # ('Your Name', 'your_email@example.com'),
+     ('Eric Mattison', 'mattison@g.harvard.edu'),
 )
 
 MANAGERS = ADMINS
@@ -25,6 +26,17 @@ DATABASES = {
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
+
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+#        'NAME': 'db_account',                      # Or path to database file if using sqlite3.
+#        'USER': 'db_account',                      # Not used with sqlite3.
+#        'PASSWORD': 'rcnewaccountapp',                  # Not used with sqlite3.
+#        'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
+#        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+#    }
+#}
 
 # mail.fas is an Alias for smtp.fas
 #EMAIL_HOST = 'localhost' #140.247.111.38'   # and 140.247.111.238 #'smtp.lsdiv.harvard.edu'
@@ -81,6 +93,7 @@ STATIC_URL = '/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
+    "/var/www/signup/requestapp/static",
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -168,8 +181,8 @@ RECAPTCHA_USE_SSL = True
 
 #RT Connection
 RT_URI = 'http://rthelp.rc.fas.harvard.edu//REST/1.0/'
-RT_USER = 'emattison'
-RT_PW = 'M@dd0g76'
+RT_USER = 'rt_api_user'
+RT_PW = 'w3PWTf9C'
 RT_EMAIL = 'rthelp@fas.harvard.edu'
 
 PI_APPROVAL = {'approved': 'approved', 'rejected': 'rejected'}

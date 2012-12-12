@@ -3,13 +3,32 @@
 
 {% block head %}
 {{ wizard.form.media }}
+<script type='text/javascript'>
+$(function() {
+  $('div.hidden_form_items').hide();
+
+  $('.hidden_form_items_link').click(function(event) {
+    event.preventDefault();
+    $('div.hidden_form_items > input').val("");
+    $('div.hidden_form_items > textarea').val("");
+    $('div.hidden_form_items').toggle('slow');
+  });
+});
+</script>
 {% endblock %}
 
 {% block content %}
 <!-- <p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p> -->
 <form action="" method="post">{% csrf_token %}
 <div class="dbx-box suf-widget widget_text"><h3 class="dbx-handle scheme dbx-box suf-widget widget_text">Account Sign-up &gt; Faculty Sponsor</h3></div>
+
+<p>Please select your Lab Group.  If your lab group is not in this list, please <a href="#" class="hidden_form_items_link">click here</a> to provide the necessary information.</p>
+{% if wizard.form.errors %}
+<p>Your submission contained errors.  Please <a href="#" class="hidden_form_items_link">click here</a> to fix these errors.</p>
+{% endif %}
 <table class="form_table">
+  <tr>
+    <td>
 {{ wizard.management_form }}
 {% if wizard.form.forms %}
     {{ wizard.form.management_form }}
@@ -17,8 +36,21 @@
         {{ form }}
     {% endfor %}
 {% else %}
-    {{ wizard.form }}
+    {% for field in wizard.form %}
+      {% if forloop.first %}
+         <p>{{ field.label_tag }} {{ field }}</p>
+	 <div class="hidden_form_items">
+      {% elif forloop.last %}
+         <p>{{field.label_tag}} {{ field.errors }}</p>
+	 <p>{{ field }}</p>
+	 </div> <!-- end class hidden_form_items -->
+      {% else %}
+	 <p>{{field.label_tag}} {{ field }} {{ field.errors }}</p>
+      {% endif %}
+    {% endfor %%}
 {% endif %}
+    </td>
+  </tr>
 </table>
 {% if wizard.steps.prev %}
 <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}">{% trans "first step" %}</button>

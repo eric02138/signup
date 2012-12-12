@@ -6,7 +6,6 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 #change this on local installations
-#cwd = os.getcwd()
 cwd =  os.path.realpath('/var/www/signup')
 APPLICATION_ROOT = os.path.realpath(os.path.join(cwd, '.'))
 
@@ -27,9 +26,6 @@ DATABASES = {
     }
 }
 
-# mail.fas is an Alias for smtp.fas
-#EMAIL_HOST = 'localhost' #140.247.111.38'   # and 140.247.111.238 #'smtp.lsdiv.harvard.edu'
-#EMAIL_PORT = 1025
 EMAIL_HOST = 'mail.fas.harvard.edu' #140.247.111.38'   # and 140.247.111.238 #'smtp.lsdiv.harvard.edu'
 EMAIL_HOST_USER = 'scientificapps@cgr.harvard.edu'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
@@ -82,7 +78,7 @@ STATIC_URL = '/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
-    "/var/www/signup/requestapp/static",
+    APPLICATION_ROOT + "/requestapp/static",
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -138,7 +134,6 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    #APPLICATION_ROOT + '/signup/templates',
     APPLICATION_ROOT + '/templates',
 )
 
@@ -204,3 +199,5 @@ LOGGING = {
         },
     }
 }
+
+from settings_local import *

@@ -25,6 +25,12 @@ $(function() {
 <p>Please select your Lab Group.  If your lab group is not in this list, please <a href="#" class="hidden_form_items_link">click here</a> to provide the necessary information.</p>
 {% if wizard.form.errors %}
 <p>Your submission contained errors.  Please <a href="#" class="hidden_form_items_link">click here</a> to fix these errors.</p>
+ {% if wizard.form.errors.in_list %}
+ {{ wizard.form.errors.in_list }}
+ {% endif %}
+ {% if wizard.form.errors.invalid_pi %}
+ {{ wizard.form.errors.invalid_pi }}
+ {% endif %}
 {% endif %}
 <table class="form_table">
   <tr>
