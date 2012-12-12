@@ -1,4 +1,5 @@
 # Django settings for signup project.
+#testing git
 import os, sys, ldap
 from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
 
