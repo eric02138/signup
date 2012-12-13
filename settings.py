@@ -85,6 +85,8 @@ STATICFILES_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 )
 
+print "static dirs from settings.py: " + STATICFILES_DIRS[0]
+
 # List of finder classes that know how to find static files in
 # various locations.
 STATICFILES_FINDERS = (
@@ -109,7 +111,7 @@ AUTH_LDAP_START_TLS = True
 AUTH_LDAP_BIND_DN = "cn=accounttest,dc=rcdev,dc=domain"
 AUTH_LDAP_BIND_PASSWORD = "!3ZW&5!X"
 AUTH_LDAP_USER_SEARCH = LDAPSearch("ou=Domain Users,dc=rcdev,dc=domain",
-    ldap.SCOPE_SUBTREE, "(uid=%(user)s)")
+                                   ldap.SCOPE_SUBTREE, "(uid=%(user)s)")
 
 AUTHENTICATION_BACKENDS = (
     'django_auth_ldap.backend.LDAPBackend',
