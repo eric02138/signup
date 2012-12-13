@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.forms import ModelForm
 from django.contrib.localflavor.us.models import PhoneNumberField
 from django.template.defaultfilters import slugify
-import datetime, md5
+import datetime, hashlib
 from django.utils import timezone
 from django.core.mail import send_mail, EmailMessage
 from settings import RT_URI, RT_USER, RT_PW, RT_EMAIL, PI_APPROVAL
@@ -78,7 +78,7 @@ class Request(models.Model):
     def save(self, *args, **kwargs):
         if not self.id_md5:
             super(Request, self).save()      # save to have an 'id'
-            self.id_md5 =  md5.new(str(self.id)).hexdigest()
+            self.id_md5 =  hashlib.md5(str(self.id)).hexdigest()
         super(Request, self).save(*args, **kwargs)
 
 class InstrumentRequest(models.Model):
@@ -169,11 +169,11 @@ def post_save_handler(sender, **kwargs):
             #send email to PI
             approve_link = "http://%s/request/pi-approval/%s/%s/" % ("127.0.0.1:8000", #change this
                                                                      obj.id_md5,
-                                                                     md5.new(PI_APPROVAL['approved'] + str(obj.pk)).hexdigest()
+                                                                     hashlib.md5(PI_APPROVAL['approved'] + str(obj.pk)).hexdigest()
                                                                      )
             reject_link = "http://%s/request/pi-approval/%s/%s/" % ("127.0.0.1:8000", #change this
                                                                     obj.id_md5,
-                                                                    md5.new(PI_APPROVAL['rejected'] + str(obj.pk)).hexdigest()
+                                                                    hashlib.md5(PI_APPROVAL['rejected'] + str(obj.pk)).hexdigest()
                                                                     )
             frm = RT_EMAIL
             to = [obj.pi.email]
