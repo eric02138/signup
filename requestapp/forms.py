@@ -112,6 +112,7 @@ class PIInfoForm(ModelForm):
 
         # if the user hasn't selected a lab group from the drop-down list, make sure they have provided all the other fields
         if not name:
+            print "not name"
             email = cleaned_data.get('email')
             first_name = cleaned_data.get('first_name')
             last_name = cleaned_data.get('last_name')
