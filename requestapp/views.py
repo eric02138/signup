@@ -8,6 +8,7 @@ from forms import CaptchaForm
 from settings import RT_URI, RT_USER, RT_PW, PI_APPROVAL
 #from signup.settings import RT_URI, RT_USER, RT_PW, PI_APPROVAL
 import rt
+import hashlib
 from ldapconnection import LdapConnection
 
 def home(request):
@@ -103,7 +104,6 @@ class RequestWizard(SessionWizardView):
                     piuser = form['name'].pi
                     lab_group = form['name']
                 else:
-                    print form
                     piuser = PIUser()
                     username = "%s%s" % (form['first_name'][0:1], form['last_name'])
                     piuser.username = username.lower()
@@ -242,18 +242,18 @@ def pi_approval(r, id_md5, approval_option_md5):
 
     #check to see if the approval string is valid
     pk = request.pk
-    status_options = [md5.new(option + str(pk)).hexdigest() for option in PI_APPROVAL]
+    status_options = [hashlib.md5(option + str(pk)).hexdigest() for option in PI_APPROVAL]
     try:
         assert(approval_option_md5 in status_options)
     except AssertionError:
         data.update({ 'err_invalid_approval': True })
         return render_to_response('pi_approval.html', data, context_instance=RequestContext(r))
 
-    status_dict = dict([(k, md5.new(v + str(pk)).hexdigest()) for (k,v) in PI_APPROVAL.items()])
+    status_dict = dict([(k, hashlib.md5(v + str(pk)).hexdigest()) for (k,v) in PI_APPROVAL.items()])
     #change the ticket based on the choice
 
-    data.update({ 'first_name': request.first_name })
-    data.update({ 'last_name': request.last_name })
+    data.update({ 'first_name': request.pi.first_name })
+    data.update({ 'last_name': request.pi.last_name })
     ticket_num = request.rt_ticket_number
 
     if approval_option_md5 == status_dict['approved']:
@@ -263,7 +263,7 @@ def pi_approval(r, id_md5, approval_option_md5):
         data.update({ 'approval_status': 'approved' })
 
         ticket_text = ""
-        ticket_text += "PI %s %s (%s) approved this request." % (request.piuser.first_name, request.piuser.last_name, request.piuser.email)
+        ticket_text += "PI %s %s (%s) approved this request." % (request.pi.first_name, request.pi.last_name, request.pi.email)
         tracker = rt.Rt(RT_URI, RT_USER, RT_PW)
         tracker.login()
         tracker.comment(ticket_num, text=ticket_text)
@@ -276,7 +276,7 @@ def pi_approval(r, id_md5, approval_option_md5):
         data.update({ 'approval_status': 'rejected' })
 
         ticket_text = ""
-        ticket_text += "PI %s %s (%s) rejected this request." % (request.piuser.first_name, request.piuser.last_name, request.piuser.email)
+        ticket_text += "PI %s %s (%s) rejected this request." % (request.pi.first_name, request.pi.last_name, request.pi.email)
         tracker = rt.Rt(RT_URI, RT_USER, RT_PW)
         tracker.login()
         tracker.edit_ticket(ticket_num, Action='comment', Text=ticket_text)

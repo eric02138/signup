@@ -122,7 +122,6 @@ class PIInfoForm(ModelForm):
 
         # if the user hasn't selected a lab group from the drop-down list, make sure they have provided all the other fields
         if not name:
-            print "not name"
             email = cleaned_data.get('email')
             first_name = cleaned_data.get('first_name')
             last_name = cleaned_data.get('last_name')
@@ -162,10 +161,17 @@ class PIInfoForm(ModelForm):
             pi_search = PIUser.objects.filter(first_name__iexact=first_name, last_name__iexact=last_name)
             if pi_search.count():
                 pi = pi_search[0]
-                lab_group = pi.labgroup_set.all()[0]
-                msg = u'The Faculty Sponsor you have added is already in the drop-down menu under "%s".' % (lab_group)
-                self._errors["in_list"] = self.error_class([msg])
-                raise forms.ValidationError(msg)
+                if pi.labgroup_set.all().count():
+                    lab_group = pi.labgroup_set.all()[0]
+                    msg = u'The Faculty Sponsor you have added is already in the drop-down menu under "%s".' % (lab_group)
+                    self._errors["in_list"] = self.error_class([msg])
+                    raise forms.ValidationError(msg)
+                else:
+                    msg = u'The Faculty Sponsor you have entered is already in the system, but they are not associated with a lab group.<br />'
+                    msg += u'Please contact <a href="mailto:mattison@g.harvard.edu?subject=\'Missing lab for PI %s %s\'">RCHelp</a> for assistance.' % (pi.first_name, pi.last_name)
+                    msg = mark_safe(msg)
+                    self._errors["in_list"] = self.error_class([msg])
+                    raise forms.ValidationError(msg)
             
             #check if PI is not in AD
             ad_result = []
@@ -176,12 +182,20 @@ class PIInfoForm(ModelForm):
             name_search = ldap.search_by_firstname_lastname(first_name, last_name)
             ldap.unbind()
 
-            #removed for testing on dummy AD system
-            #if not (email_search or name_search):
-            #    msg = '{0} {1} is not a valid Harvard Principal Investigator.'.format(first_name, last_name)
-            #    msg = mark_safe(msg)
-            #    self._errors["invalid_pi"] = self.error_class([msg])
-            #    raise forms.ValidationError(msg)
+            #usernames for piusers must be unique, so check to see if they already have an account
+            if email_search:
+                msg = ""
+                for name in email_search:
+                    msg += '{0} {1} ({2}) already has an RC account.<br />  Please <a href="mailto:mattison@g.harvard.edu?subject=\'Missing lab group for  {0} {1}\'">send an email to RCHelp</a>.<br />'.format(name[1]['givenName'][0], name[1]['sn'][0], name[1]['mail'][0])
+                msg = mark_safe(msg)
+                raise forms.ValidationError(msg)
+            
+            if name_search:
+                msg = ""
+                for name in name_search:
+                    msg += '{0} {1} ({2}) already has an RC account.<br />  Please <a href="mailto:mattison@g.harvard.edu?subject=\'Missing lab group for  {0} {1}\'">send an email to RCHelp</a>.<br />'.format(name[1]['givenName'][0], name[1]['sn'][0], name[1]['mail'][0])
+                msg = mark_safe(msg)
+                raise forms.ValidationError(msg)
 
         else:
             #if an item from the drop-down menu has been selected, use the pi info from the lab group

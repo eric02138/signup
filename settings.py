@@ -85,7 +85,7 @@ STATICFILES_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 )
 
-print "static dirs from settings.py: " + STATICFILES_DIRS[0]
+#print "static dirs from settings.py: " + STATICFILES_DIRS[0]
 
 # List of finder classes that know how to find static files in
 # various locations.

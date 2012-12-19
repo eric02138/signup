@@ -44,6 +44,7 @@ class Request(models.Model):
     rc_rejection = models.BooleanField(default=False)
     pi_approval = models.BooleanField(default=False)
     pi_rejection = models.BooleanField(default=False)
+    ignore_me = models.BooleanField(default=True)
     req_created = models.DateTimeField(auto_now_add=True)
     req_last_modified = models.DateTimeField(auto_now=True)
     id_md5 = models.CharField(max_length=200, blank=True, null=True, help_text="Auto-filled on save")
@@ -103,12 +104,12 @@ class LabAdministrator(models.Model):
     extra_info = models.CharField(default="", null=True, max_length=500)
 
 class LabGroup(models.Model):
-    name = models.CharField(default="", blank=True, null=True, max_length=100, verbose_name="Lab Group")
+    name = models.CharField(default="", null=False,  max_length=100, verbose_name="Lab Group")
     ad_group_name = models.CharField(default="", null=True, max_length=100, help_text="corresponding group name in RC Active Directory")
-    members = models.ManyToManyField(User)
-    services = models.ManyToManyField(Service, null=True)
+    members = models.ManyToManyField(User, blank=True, null=True)
+    services = models.ManyToManyField(Service, blank=True, null=True)
 
-    pi = models.OneToOneField(PIUser, blank=True, null=True)
+    pi = models.OneToOneField(PIUser, default="", blank=False, null=False)
     #pi_first_name = models.CharField(default="", blank=True, null=True, max_length=100, verbose_name="Faculty Sponsor's First Name")
     #pi_last_name = models.CharField(default="", blank=True, null=True, max_length=100, verbose_name="Faculty Sponsor's Last Name")
     #pi_email = models.EmailField(default="", blank=True, null=True, verbose_name="Faculty Sponsor's Email Address")
