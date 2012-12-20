@@ -3,16 +3,36 @@
 
 {% block head %}
 {{ wizard.form.media }}
+<style type='text/css'>
+.hidden_form_items {
+  display: none;
+}
+</style>
 <script type='text/javascript'>
 $(function() {
-  $('div.hidden_form_items').hide();
+  //$('div.hidden_form_items').hide();
 
   $('.hidden_form_items_link').click(function(event) {
     event.preventDefault();
     $('div.hidden_form_items > input').val("");
     $('div.hidden_form_items > textarea').val("");
     $('div.hidden_form_items').toggle('slow');
+
+    // If the text boxes are showing, set the drop-down to none
+    if ($('div.hidden_form_items').css('display') != 'none') {
+      $('#id_piinfo-name').val("");
+    }
   });
+
+  $('#id_piinfo-name').change(function() {
+    // If the drop-down is set to a lab, hide the text boxes
+    if ($(this).val() != "") {
+       $('div.hidden_form_items > input').val("");
+       $('div.hidden_form_items > textarea').val("");
+       $('div.hidden_form_items').toggle('slow');
+    }
+  });
+
 });
 </script>
 {% endblock %}
